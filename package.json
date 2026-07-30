@@ -1,0 +1,49 @@
+{
+  "name": "internetspeettest",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
+    "prepare": "husky",
+    "sitemap": "next-sitemap"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@tanstack/react-query": "^5.101.4",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.43.0",
+    "lucide-react": "^0.468.0",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.83.0",
+    "recharts": "^2.15.4",
+    "tailwind-merge": "^2.6.1",
+    "three": "^0.169.0",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.169.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "next-sitemap": "^4.2.3",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5"
+  }
+}
