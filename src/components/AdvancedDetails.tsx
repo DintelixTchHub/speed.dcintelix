@@ -45,15 +45,16 @@ function getDeviceType(): string {
   return "Desktop";
 }
 
-function getIPVersion(): string {
+async function getIPVersion(): Promise<string> {
   if (typeof window === "undefined") return "Unknown";
   const rtc = new RTCPeerConnection({ iceServers: [] });
   rtc.createDataChannel("");
-  const offer = rtc.createOffer();
-  rtc.setLocalDescription(offer);
+  const offer = await rtc.createOffer();
+  await rtc.setLocalDescription(offer);
   return new Promise<string>((resolve) => {
     setTimeout(() => {
-      const candidates = rtc.localDescription.sdp.match(/(?:[0-9]{1,3}\.){3}[0-9]{1,3}/g);
+      const sdp = rtc.localDescription?.sdp;
+      const candidates = sdp?.match(/(?:[0-9]{1,3}\.){3}[0-9]{1,3}/g);
       if (candidates && candidates.some((ip) => ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172."))) {
         resolve("IPv4 (Local)");
       } else if (candidates && candidates.some((ip) => ip.includes(":"))) {
