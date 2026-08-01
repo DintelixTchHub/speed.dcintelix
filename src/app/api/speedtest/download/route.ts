@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const CONTENT_LENGTH = 50 * 1024 * 1024;
 const CHUNK_SIZE = 5 * 1024 * 1024;
@@ -35,6 +37,9 @@ export async function GET(request: NextRequest) {
   headers.set("Content-Type", "application/octet-stream");
   headers.set("Content-Length", String(body.length));
   headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  headers.set("Pragma", "no-cache");
+  headers.set("Expires", "0");
+  headers.set("Vary", "*");
   headers.set("Connection", "keep-alive");
   headers.set("Accept-Ranges", "bytes");
   if (range) {

@@ -171,6 +171,7 @@ export class SpeedService {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url.toString(), true);
         xhr.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "arraybuffer";
 
         if (signal) {
@@ -212,7 +213,7 @@ export class SpeedService {
           const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
           typedXhr._abort?.();
           const totalSec = (performance.now() - startTime) / 1000;
-          const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0);
+          const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0) || 0;
           const rounded =
             totalSec > 0 && finalLoaded > 0
               ? Math.round(((finalLoaded * 8) / (1024 * 1024 * totalSec)) * 10) / 10
@@ -265,6 +266,9 @@ export class SpeedService {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", "application/octet-stream");
+        xhr.setRequestHeader("Content-Length", String(payload.byteLength));
+        xhr.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "text";
 
         let uploadedBytes = 0;
@@ -273,7 +277,6 @@ export class SpeedService {
         let lastBytes = 0;
         let smoothedInstantSpeed = 0;
         const smoothingFactor = 0.35;
-        let progressEmitted = false;
 
         xhr.upload.onprogress = (event) => {
           if (signal?.aborted) {
@@ -281,29 +284,29 @@ export class SpeedService {
             return;
           }
 
-          if (event.lengthComputable) {
-            uploadedBytes = event.loaded;
-            const now = performance.now();
-            const elapsed = now - lastTime;
+          uploadedBytes = event.loaded || payload.byteLength;
+          const now = performance.now();
+          const elapsed = now - lastTime;
+          const totalBytes = event.total || payload.byteLength;
 
-            if (elapsed >= 250) {
-              const bytesDelta = uploadedBytes - lastBytes;
-               const instantMbps = this.bytesDeltaToMbps(bytesDelta, elapsed);
+          if (event.lengthComputable || elapsed >= 250 || uploadedBytes >= totalBytes) {
+            const bytesDelta = Math.max(uploadedBytes - lastBytes, 0);
+            const instantMbps = bytesDelta > 0 ? this.bytesDeltaToMbps(bytesDelta, elapsed || 250) : 0;
+            if (bytesDelta > 0) {
               speeds.push(instantMbps);
-
-              const avgMbps = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-              smoothedInstantSpeed =
-                smoothedInstantSpeed === 0
-                  ? instantMbps
-                  : smoothingFactor * instantMbps + (1 - smoothingFactor) * smoothedInstantSpeed;
-              const progress = Math.min((event.loaded / event.total) * 100, 100);
-
-              onProgress?.(progress, avgMbps, smoothedInstantSpeed);
-              progressEmitted = true;
-
-              lastTime = now;
-              lastBytes = uploadedBytes;
             }
+
+            const avgMbps = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+            smoothedInstantSpeed =
+              smoothedInstantSpeed === 0
+                ? instantMbps
+                : smoothingFactor * instantMbps + (1 - smoothingFactor) * smoothedInstantSpeed;
+            const progress = Math.min((uploadedBytes / totalBytes) * 100, 100);
+
+            onProgress?.(progress, avgMbps, smoothedInstantSpeed);
+
+            lastTime = now;
+            lastBytes = uploadedBytes;
           }
         };
 
