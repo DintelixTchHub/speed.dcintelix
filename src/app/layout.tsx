@@ -80,8 +80,8 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/icon",
-    apple: "/apple-icon",
+    icon: "/dc-speed-icon-logo.png",
+    apple: "/dc-speed-icon-logo.png",
   },
   manifest: "/manifest.json",
   appleWebApp: {

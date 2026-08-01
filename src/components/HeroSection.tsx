@@ -1,8 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Zap } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -16,10 +14,14 @@ export function HeroSection() {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.3, duration: 1 }}
-        className="flex items-center gap-3"
+        className="flex items-center gap-4"
       >
         <div className="relative">
-          <Zap className={cn("w-10 h-10 text-brand", "drop-shadow-[0_0_15px_rgba(0,255,136,0.6)]")} />
+          <img
+            src="/dc-speed-icon-logo.png"
+            alt="DCintelix Speed Test logo"
+            className="h-20 w-20 rounded-[28px] object-cover shadow-[0_0_30px_rgba(0,255,136,0.45)]"
+          />
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
           <span className="text-text-primary">DCintelix</span>
