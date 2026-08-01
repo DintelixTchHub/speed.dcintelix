@@ -21,7 +21,7 @@ export function AppBootLoader({ children }: { children: ReactNode }) {
             <BrandMark size={110} darkBackground className="app-loader__brand" />
           </div>
         </div>
-        <p className="app-loader__label">Initializing DCintelix Internet Speed Performance Checking and Analytics</p>
+        <p className="app-loader__label">Initializing DCINTELIX CO LTD network performance platform</p>
       </div>
 
       <div className="app-content">{children}</div>

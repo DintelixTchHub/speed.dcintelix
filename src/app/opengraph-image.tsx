@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'DCintelix Speed Test - Premium Internet Intelligence'
+export const alt = 'DCINTELIX CO LTD - innovate. build. grow'
 export const size = {
   width: 1200,
   height: 630,
@@ -67,7 +67,7 @@ export default async function Image() {
           </svg>
           <div
             style={{
-              fontSize: 100,
+              fontSize: 90,
               fontWeight: 'bold',
               background: 'linear-gradient(135deg, #00FF88, #00D9FF)',
               WebkitBackgroundClip: 'text',
@@ -75,18 +75,28 @@ export default async function Image() {
               backgroundClip: 'text',
             }}
           >
-            DCintelix
+            DCINTELIX
           </div>
         </div>
         <div
           style={{
-            fontSize: 48,
+            fontSize: 34,
             color: '#00D9FF',
-            letterSpacing: '0.1em',
-            marginBottom: '30px',
+            letterSpacing: '0.12em',
+            marginBottom: '18px',
           }}
         >
-          SPEED TEST
+          CO LTD
+        </div>
+        <div
+          style={{
+            fontSize: 36,
+            color: '#E8FFF6',
+            marginBottom: '18px',
+            letterSpacing: '0.06em',
+          }}
+        >
+          innovate. build. grow
         </div>
         <div
           style={{
@@ -95,7 +105,7 @@ export default async function Image() {
             marginBottom: '40px',
           }}
         >
-          Premium Internet Intelligence Platform
+          Powered by DCINTELIX CO LTD
         </div>
         <div
           style={{

@@ -22,11 +22,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "DCintelix Internet Speed Performance",
-    template: "%s | DCintelix",
+    default: "DCINTELIX CO LTD Internet Speed Performance",
+    template: "%s | DCINTELIX CO LTD",
   },
   description:
-    "Premium futuristic internet speed performance platform. Test your download, upload speeds and ping with DCintelix - the next generation internet intelligence platform.",
+    "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
   keywords: [
     "speed test",
     "internet speed",
@@ -34,7 +34,10 @@ export const metadata: Metadata = {
     "upload speed",
     "ping",
     "network test",
-    "DCintelix",
+    "ISP rankings Rwanda",
+    "East Africa internet performance",
+    "public analytics dashboard",
+    "DCINTELIX CO LTD",
     "bandwidth",
     "latency",
     "jitter",
@@ -57,15 +60,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://speed.dcintelix.rw",
-    siteName: "DCintelix Speed Performance",
-    title: "DCintelix Internet Speed Performance - Premium Internet Intelligence",
+    siteName: "DCINTELIX CO LTD Speed Performance",
+    title: "DCINTELIX CO LTD Internet Speed Performance",
     description:
-      "Premium futuristic internet speed Performance platform. Test your download, upload speeds and ping with precision.",
+      "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DCintelix Speed Performance",
-    description: "Premium futuristic internet speed Performance platform. Test your download, upload speeds and ping with precision.",
+    title: "DCINTELIX CO LTD Speed Performance",
+    description: "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
     site: "@dcintelix",
     creator: "@dcintelix",
   },
@@ -125,7 +128,7 @@ export default function RootLayout({
         {
           "@type": "HowToStep",
           name: "Open Speed Performance",
-          text: "Visit speedtest.dcintelix.rw to start testing your internet connection.",
+          text: "Visit speed.dcintelix.rw to start testing your internet connection.",
           url: "https://speed.dcintelix.rw",
         },
         {

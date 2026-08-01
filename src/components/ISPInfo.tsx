@@ -110,7 +110,7 @@ export function ISPInfo() {
       <div className="flex items-center gap-3 mb-6">
         <Globe className="w-5 h-5 text-brand" />
         <h3 className="text-lg font-semibold text-text-primary">
-          ISP Rankings
+          Rwanda & East Africa ISP Rankings
         </h3>
       </div>
 
@@ -146,7 +146,7 @@ export function ISPInfo() {
 
       <GlassCard hudBorder className="p-6">
         <h4 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-4">
-          Top ISPs
+          Leading Providers
         </h4>
         <div className="space-y-3">
           {isps.slice(0, 5).map((isp, index) => (

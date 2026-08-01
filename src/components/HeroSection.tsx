@@ -24,9 +24,9 @@ export function HeroSection() {
           />
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-          <span className="text-text-primary">DCintelix</span>
+          <span className="text-text-primary">DCINTELIX</span>
           <span className="block text-xl md:text-2xl font-light text-text-secondary mt-2">
-            Speed Test
+            Rwanda & East Africa
           </span>
         </h1>
       </motion.div>
@@ -35,9 +35,9 @@ export function HeroSection() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 1 }}
-        className="max-w-2xl text-base md:text-lg text-text-secondary"
+        className="max-w-3xl text-base md:text-lg text-text-secondary"
       >
-        Premium futuristic internet intelligence platform. Test your download, upload speeds and ping with precision.
+        Measure internet quality, compare ISP performance across Rwanda and East Africa, and monitor public network analytics through a live performance dashboard. Powered by DCINTELIX CO LTD. innovate. build. grow.
       </motion.p>
 
       <motion.div
@@ -48,15 +48,15 @@ export function HeroSection() {
       >
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-          <span>Live Servers</span>
+          <span>Rwanda Coverage</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" style={{ animationDelay: "0.5s" }} />
-          <span>High Precision</span>
+          <span>ISP Benchmarking</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" style={{ animationDelay: "1s" }} />
-          <span>Real-time Analytics</span>
+          <span>Public Analytics</span>
         </div>
       </motion.div>
     </motion.section>

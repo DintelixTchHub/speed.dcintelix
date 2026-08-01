@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: "https://speedtest.dcintelix.rw",
+  siteUrl: "https://speed.dcintelix.rw",
   generateRobotsTxt: true,
   robotsTxtOptions: {
     policies: [

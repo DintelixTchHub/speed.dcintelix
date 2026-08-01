@@ -25,7 +25,7 @@ export function Footer() {
           </a>
           <div className="flex items-center gap-2 text-text-secondary">
             <Globe className="w-4 h-4" />
-            <span className="text-sm">speedtest.dcintelix.rw</span>
+            <span className="text-sm">speed.dcintelix.rw</span>
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export function Footer() {
         </div>
 
         <p className="text-xs text-text-secondary">
-          © {currentYear} DCintelix. Premium Internet Intelligence Platform.
+          © {currentYear} DCINTELIX CO LTD. Internet performance insights for Rwanda and East Africa.
         </p>
       </div>
     </motion.footer>

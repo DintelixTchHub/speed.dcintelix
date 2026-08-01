@@ -44,8 +44,8 @@ export function BrandMark({
         width="164"
         height="164"
         rx="42"
-        fill={darkBackground ? "rgba(10,14,18,0.7)" : "rgba(255,255,255,0.02)"}
-        stroke="rgba(255,255,255,0.08)"
+        fill={darkBackground ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.02)"}
+        stroke="rgba(0, 0, 0, 0.08)"
       />
 
       <g filter="url(#dcintelixGlow)">
@@ -136,8 +136,8 @@ export function BrandMark({
     <div className="flex items-center gap-3">
       {Icon}
       <div className="flex flex-col leading-none">
-        <span className="text-2xl font-bold tracking-tight text-white">DCintelix</span>
-        <span className="text-xs font-medium uppercase tracking-[0.28em] text-[#7be7bf]">Speed Test</span>
+        <span className="text-2xl font-bold tracking-tight text-white">DCINTELIX</span>
+        <span className="text-xs font-medium uppercase tracking-[0.28em] text-[#7be7bf]">CO LTD</span>
       </div>
     </div>
   );

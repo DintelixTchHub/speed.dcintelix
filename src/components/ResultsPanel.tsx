@@ -24,6 +24,197 @@ function formatConnectionType(type: string | null | undefined): string {
   return map[type.toLowerCase()] || type;
 }
 
+function formatShareDate(date?: Date | string | number): string {
+  const value = date instanceof Date ? date : new Date(date ?? Date.now());
+  return value.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  if (typeof ctx.roundRect === "function") {
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+async function generateResultImage({
+  result,
+  isp,
+  connectionType,
+  quality,
+}: {
+  result: { download: number; upload: number; ping: number; jitter: number; timestamp?: Date | string | number };
+  isp?: { isp?: string; city?: string; country?: string; ip?: string } | null;
+  connectionType?: string | null;
+  quality: { label: string; color: string };
+}): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 1400;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas is not supported in this browser.");
+  }
+
+  const background = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  background.addColorStop(0, "#040814");
+  background.addColorStop(0.5, "#071c2b");
+  background.addColorStop(1, "#020409");
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const glow1 = ctx.createRadialGradient(250, 220, 40, 250, 220, 260);
+  glow1.addColorStop(0, "rgba(0, 255, 136, 0.24)");
+  glow1.addColorStop(1, "rgba(0, 255, 136, 0)");
+  ctx.fillStyle = glow1;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const glow2 = ctx.createRadialGradient(950, 260, 30, 950, 260, 260);
+  glow2.addColorStop(0, "rgba(0, 217, 255, 0.18)");
+  glow2.addColorStop(1, "rgba(0, 217, 255, 0)");
+  ctx.fillStyle = glow2;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const cardX = 80;
+  const cardY = 100;
+  const cardWidth = canvas.width - cardX * 2;
+  const cardHeight = canvas.height - 140;
+
+  ctx.fillStyle = "rgba(9, 15, 24, 0.8)";
+  drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, 36);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, cardX, cardY, cardWidth, cardHeight, 36);
+  ctx.stroke();
+
+  ctx.fillStyle = "#00FF88";
+  ctx.fillRect(cardX + 52, cardY + 54, 12, 12);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "700 40px sans-serif";
+  ctx.fillText("DCintelix", cardX + 84, cardY + 70);
+
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = "600 18px sans-serif";
+  ctx.fillText("Internet Speed Test", cardX + 52, cardY + 120);
+
+  ctx.fillStyle = quality.color;
+  ctx.fillRect(cardX + cardWidth - 210, cardY + 42, 150, 42);
+  ctx.fillStyle = "#061018";
+  ctx.font = "700 20px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(quality.label, cardX + cardWidth - 135, cardY + 70);
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "700 90px sans-serif";
+  ctx.fillText(`${result.download.toFixed(1)}`, cardX + 52, cardY + 260);
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.font = "600 30px sans-serif";
+  ctx.fillText("Mbps download", cardX + 52, cardY + 310);
+
+  const metricStartY = cardY + 420;
+  const metricCardWidth = (cardWidth - 120) / 2;
+  const metricCardHeight = 180;
+  const metricCards = [
+    { label: "Upload", value: `${result.upload.toFixed(1)} Mbps`, color: "#00D9FF", x: cardX + 52, y: metricStartY },
+    { label: "Ping", value: `${result.ping.toFixed(0)} ms`, color: "#00FF88", x: cardX + 52 + metricCardWidth + 16, y: metricStartY },
+    { label: "Jitter", value: `${result.jitter.toFixed(0)} ms`, color: "#FFC107", x: cardX + 52, y: metricStartY + metricCardHeight + 24 },
+    { label: "Quality", value: quality.label, color: quality.color, x: cardX + 52 + metricCardWidth + 16, y: metricStartY + metricCardHeight + 24 },
+  ];
+
+  metricCards.forEach((card) => {
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    drawRoundedRect(ctx, card.x, card.y, metricCardWidth, metricCardHeight, 24);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.stroke();
+
+    ctx.fillStyle = card.color;
+    ctx.fillRect(card.x + 22, card.y + 20, 8, 8);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "600 18px sans-serif";
+    ctx.fillText(card.label, card.x + 42, card.y + 48);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "700 38px sans-serif";
+    ctx.fillText(card.value, card.x + 42, card.y + 114);
+  });
+
+  const infoY = metricStartY + 2 * (metricCardHeight + 24) + 28;
+  const infoWidth = cardWidth - 104;
+  const infoItems = [
+    { label: "ISP", value: isp?.isp || "Unknown" },
+    { label: "Connection", value: formatConnectionType(connectionType) },
+    { label: "Location", value: `${isp?.city || "Unknown"}, ${isp?.country || "Unknown"}` },
+    { label: "Test Time", value: formatShareDate(result.timestamp) },
+  ];
+
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  drawRoundedRect(ctx, cardX + 52, infoY, infoWidth, 180, 24);
+  ctx.fill();
+
+  infoItems.forEach((item, index) => {
+    const x = cardX + 72 + (index % 2) * (infoWidth / 2 - 12);
+    const y = infoY + 40 + Math.floor(index / 2) * 60;
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.font = "600 16px sans-serif";
+    ctx.fillText(item.label.toUpperCase(), x, y);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "700 24px sans-serif";
+    ctx.fillText(item.value, x, y + 32);
+  });
+
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = "600 20px sans-serif";
+  const footerText = `Public IP • ${isp?.ip || "Unknown"} • Quality score ${Math.max(0, Math.min(100, Math.round(result.download / 2)))}/100`;
+  ctx.fillText(footerText, cardX + 52, cardHeight - 120);
+
+  ctx.fillStyle = "rgba(255,255,255,0.45)";
+  ctx.font = "500 18px sans-serif";
+  ctx.fillText("Share on WhatsApp • Instagram • Facebook", cardX + 52, cardHeight - 80);
+  ctx.fillText("speed.dcintelix.rw", cardX + 52, cardHeight - 48);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Unable to generate image."));
+        return;
+      }
+      resolve(blob);
+    }, "image/png");
+  });
+}
+
 export function ResultsPanel() {
   const { result, status, isp, connectionType } = useSpeedTestStore();
 
@@ -76,23 +267,60 @@ export function ResultsPanel() {
   const ConnectionIcon = connectionType === "ethernet" ? EthernetPortIcon : Wifi;
 
   const handleShare = async () => {
-    const shareData = {
-      title: "DCintelix Speed Test Result",
-      text: `My internet speed: ${result.download.toFixed(1)} Mbps download, ${result.upload.toFixed(1)} Mbps upload, ${result.ping.toFixed(0)} ms ping, ${result.jitter.toFixed(0)} ms jitter. Quality: ${quality.label}`,
-      url: typeof window !== "undefined" ? window.location.href : "",
-    };
+    const shareText = `My internet speed: ${result.download.toFixed(1)} Mbps download, ${result.upload.toFixed(1)} Mbps upload, ${result.ping.toFixed(0)} ms ping and ${result.jitter.toFixed(0)} ms jitter. Quality: ${quality.label}. Shared from DCintelix.`;
+    const socialCaption = `⚡ My latest internet speed test result:\n${result.download.toFixed(1)} Mbps download • ${result.upload.toFixed(1)} Mbps upload\nPing: ${result.ping.toFixed(0)} ms • Jitter: ${result.jitter.toFixed(0)} ms\nQuality: ${quality.label}\n\nPerfect for WhatsApp, Instagram, and Facebook posts!`;
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(
-          `${shareData.text} - ${shareData.url}`
-        );
-        showToast("Result copied to clipboard!", "success");
+      const blob = await generateResultImage({ result, isp, connectionType, quality });
+      const file = new File([blob], "dcintelix-speed-test-result.png", { type: "image/png" });
+
+      if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "DCintelix Speed Test Result",
+          text: socialCaption,
+          url: shareUrl,
+          files: [file],
+        });
+        showToast("Share ready for WhatsApp, Instagram & Facebook!", "success");
+        return;
       }
-    } catch {
-      showToast("Unable to share result", "error");
+
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: "DCintelix Speed Test Result",
+          text: socialCaption,
+          url: shareUrl,
+        });
+        showToast("Share ready for social media!", "success");
+        return;
+      }
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = downloadUrl;
+      anchor.download = "dcintelix-speed-test-result.png";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      showToast("Image ready to share on WhatsApp, Instagram or Facebook!", "success");
+    } catch (error) {
+      console.error("Unable to prepare share image:", error);
+      try {
+        const fallbackBlob = await generateResultImage({ result, isp, connectionType, quality });
+        const fallbackUrl = URL.createObjectURL(fallbackBlob);
+        const anchor = document.createElement("a");
+        anchor.href = fallbackUrl;
+        anchor.download = "dcintelix-speed-test-result.png";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(fallbackUrl), 1000);
+        showToast("Image ready to share on social media!", "success");
+      } catch {
+        showToast("Unable to share result", "error");
+      }
     }
   };
 

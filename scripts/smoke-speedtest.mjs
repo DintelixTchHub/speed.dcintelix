@@ -1,6 +1,11 @@
 import process from 'node:process';
 
-const baseUrl = process.argv[2] || process.env.BASE_URL || 'http://localhost:3000';
+const baseUrl = process.argv[2] || process.env.BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null);
+
+if (!baseUrl) {
+  console.error('No target URL provided. Use: BASE_URL=https://speed-dcintelix.vercel.app npm run smoke:speedtest');
+  process.exit(1);
+}
 
 async function fetchJson(url, init) {
   const response = await fetch(url, {
@@ -92,6 +97,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Smoke check crashed:', error);
+  console.error('Smoke check crashed while contacting:', baseUrl);
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
