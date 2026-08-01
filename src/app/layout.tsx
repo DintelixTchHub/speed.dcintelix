@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppBootLoader } from "@/components/AppBootLoader";
 import { Providers } from "@/components/Providers";
 import { ToastContainer } from "@/components/Toast";
 import "./globals.css";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | DCintelix",
   },
   description:
-    "Premium futuristic internet speed test platform. Test your download, upload speeds and ping with DCintelix - the next generation internet intelligence platform.",
+    "Premium futuristic internet speed performance platform. Test your download, upload speeds and ping with DCintelix - the next generation internet intelligence platform.",
   keywords: [
     "speed test",
     "internet speed",
@@ -48,23 +49,23 @@ export const metadata: Metadata = {
   authors: [{ name: "DCintelix" }],
   creator: "DCintelix",
   publisher: "DCintelix",
-  metadataBase: new URL("https://speedtest.dcintelix.rw"),
+  metadataBase: new URL("https://speed.dcintelix.rw"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://speedtest.dcintelix.rw",
-    siteName: "DCintelix Speed Test",
-    title: "DCintelix Speed Test - Premium Internet Intelligence",
+    url: "https://speed.dcintelix.rw",
+    siteName: "DCintelix Speed Performance",
+    title: "DCintelix Internet Speed Performance - Premium Internet Intelligence",
     description:
-      "Premium futuristic internet speed test platform. Test your download, upload speeds and ping with precision.",
+      "Premium futuristic internet speed Performance platform. Test your download, upload speeds and ping with precision.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DCintelix Speed Test",
-    description: "Premium futuristic internet speed test platform. Test your download, upload speeds and ping with precision.",
+    title: "DCintelix Speed Performance",
+    description: "Premium futuristic internet speed Performance platform. Test your download, upload speeds and ping with precision.",
     site: "@dcintelix",
     creator: "@dcintelix",
   },
@@ -91,7 +92,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "DCintelix Speed Test",
+    title: "DCintelix Speed Performance",
   },
   formatDetection: {
     telephone: false,
@@ -171,7 +172,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppBootLoader>{children}</AppBootLoader>
+        </Providers>
         <ToastContainer />
       </body>
     </html>
