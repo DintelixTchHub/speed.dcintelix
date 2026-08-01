@@ -254,7 +254,7 @@ export class SpeedService {
       return 0;
     }
 
-    const dataSize = 20 * 1024 * 1024;
+    const dataSize = 4 * 1024 * 1024;
     const payload = new Uint8Array(dataSize);
     for (let i = 0; i < dataSize; i++) {
       payload[i] = i & 0xff;
@@ -266,7 +266,6 @@ export class SpeedService {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", "application/octet-stream");
-        xhr.setRequestHeader("Content-Length", String(payload.byteLength));
         xhr.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "text";
