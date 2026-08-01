@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "DCintelix Speed Test",
+    default: "DCintelix Internet Speed Performance",
     template: "%s | DCintelix",
   },
   description:
@@ -80,7 +80,11 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/dc-speed-icon-logo.png",
+    icon: [
+      { url: "/dc-speed-icon-logo.png", sizes: "512x512", type: "image/png" },
+      { url: "/dc-speed-icon-logo.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/dc-speed-icon-logo.png",
     apple: "/dc-speed-icon-logo.png",
   },
   manifest: "/manifest.json",
@@ -102,26 +106,26 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "DCintelix Speed Test",
-    url: "https://speedtest.dcintelix.rw",
+    name: "DCintelix Internet Speed Performance ",
+    url: "https://speed.dcintelix.rw",
     description:
-      "Premium futuristic internet speed test platform. Test your download, upload speeds and ping with precision.",
+      "Premium futuristic internet speed performance platform. Ckeck your download, upload speeds and ping with precision.",
     publisher: {
       "@type": "Organization",
       name: "DCintelix",
-      url: "https://speedtest.dcintelix.rw",
+      url: "https://www.dcintelix.rw",
     },
     potentialAction: {
       "@type": "HowTo",
-      name: "Test Your Internet Speed",
+      name: "Check Your Internet Speed",
       description:
         "Learn how to test your internet download speed, upload speed, and ping with DCintelix Speed Test.",
       step: [
         {
           "@type": "HowToStep",
-          name: "Open Speed Test",
+          name: "Open Speed Performance",
           text: "Visit speedtest.dcintelix.rw to start testing your internet connection.",
-          url: "https://speedtest.dcintelix.rw",
+          url: "https://speed.dcintelix.rw",
         },
         {
           "@type": "HowToStep",
@@ -130,17 +134,17 @@ export default function RootLayout({
         },
         {
           "@type": "HowToStep",
-          name: "Ping Test",
+          name: "Ping Speed",
           text: "Measures the latency of your connection in milliseconds.",
         },
         {
           "@type": "HowToStep",
-          name: "Download Test",
+          name: "Download Speed",
           text: "Tests your download speed by measuring how fast data is received from the server.",
         },
         {
           "@type": "HowToStep",
-          name: "Upload Test",
+          name: "Upload Speed",
           text: "Tests your upload speed by measuring how fast data is sent to the server.",
         },
         {
@@ -157,6 +161,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="icon" type="image/png" href="/dc-speed-icon-logo.png" />
+        <link rel="shortcut icon" href="/dc-speed-icon-logo.png" />
+        <link rel="icon" href="/dc-speed-icon-logo.png" sizes="any" />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
         <script
           type="application/ld+json"
