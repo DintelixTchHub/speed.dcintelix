@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+const SITE_URL = "https://speed.dcintelix.rw";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -29,7 +31,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/api/"],
       },
     ],
-    sitemap: "https://speed.dcintelix.rw/sitemap.xml",
-    host: "https://speed.dcintelix.rw",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
