@@ -3,7 +3,11 @@ export interface ISP {
   name: string;
   logo?: string;
   rating: number;
-  country: string;
+  country?: string | null;
+  province?: string | null;
+  city?: string | null;
+  location?: string | null;
+  networkType?: string | null;
   avgDownload: number;
   avgUpload: number;
   avgPing: number;

@@ -38,6 +38,31 @@ type ISPEntry = {
   rank?: number;
 };
 
+type RwandaOverviewData = {
+  country: string;
+  totalTests: number;
+  averageDownload: number;
+  averageUpload: number;
+  averagePing: number;
+  averageJitter: number;
+  averagePacketLoss: number;
+  testsToday: number;
+  activeISPs: number;
+  cities: number;
+};
+
+type RwandaISPEntry = {
+  name: string;
+  rank: number;
+  averageDownload: number;
+  averageUpload: number;
+  averagePing: number;
+  averageJitter: number;
+  packetLoss: number;
+  tests: number;
+  country: string;
+};
+
 export function AnalyticsDashboard() {
   const { data: overview } = useQuery<OverviewData>({
     queryKey: ["analytics", "overview"],
@@ -60,6 +85,18 @@ export function AnalyticsDashboard() {
   const { data: ispRanks } = useQuery<Array<ISPEntry>>({
     queryKey: ["analytics", "ispRankings"],
     queryFn: (): Promise<Array<ISPEntry>> => analyticsService.getISPRankings("30d"),
+    refetchInterval: 30000,
+  });
+
+  const { data: rwandaOverview } = useQuery<RwandaOverviewData>({
+    queryKey: ["analytics", "rwandaOverview"],
+    queryFn: (): Promise<RwandaOverviewData> => analyticsService.getRwandaOverview(),
+    refetchInterval: 30000,
+  });
+
+  const { data: rwandaIspRanks } = useQuery<Array<RwandaISPEntry>>({
+    queryKey: ["analytics", "rwandaIspRankings"],
+    queryFn: (): Promise<Array<RwandaISPEntry>> => analyticsService.getRwandaIspRankings("30d"),
     refetchInterval: 30000,
   });
 
@@ -210,17 +247,41 @@ export function AnalyticsDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <GlassCard className="p-6">
-          <h3 className="mb-4 text-lg font-semibold text-text-primary">ISP Rankings</h3>
+          <h3 className="mb-4 text-lg font-semibold text-text-primary">Rwanda Overview</h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white/5 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-secondary">Total Tests</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{rwandaOverview?.totalTests ?? 0}</p>
+              </div>
+              <div className="rounded-xl bg-white/5 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-secondary">Active ISPs</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{rwandaOverview?.activeISPs ?? 0}</p>
+              </div>
+              <div className="rounded-xl bg-white/5 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-secondary">Avg Download</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{rwandaOverview?.averageDownload ?? 0} Mbps</p>
+              </div>
+              <div className="rounded-xl bg-white/5 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-secondary">Cities</p>
+                <p className="mt-2 text-2xl font-semibold text-text-primary">{rwandaOverview?.cities ?? 0}</p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="p-6">
+          <h3 className="mb-4 text-lg font-semibold text-text-primary">Rwanda ISP Rankings</h3>
           <div className="space-y-3">
-            {(ispRanks ?? []).slice(0, 5).map((entry, index) => (
-              <div key={entry.name ?? index} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+            {(rwandaIspRanks ?? []).slice(0, 5).map((entry) => (
+              <div key={entry.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                 <div>
-                  <p className="font-semibold text-text-primary">#{entry.rank ?? index + 1} {entry.name}</p>
-                  <p className="text-xs text-text-secondary">{entry.tests} tests</p>
+                  <p className="font-semibold text-text-primary">#{entry.rank} {entry.name}</p>
+                  <p className="text-xs text-text-secondary">{entry.tests} tests · {entry.averagePing} ms ping</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-brand">{entry.averageDownload} Mbps</p>
-                  <p className="text-xs text-text-secondary">{entry.averagePing} ms ping</p>
+                  <p className="text-xs text-text-secondary">{entry.averageUpload} Mbps UL</p>
                 </div>
               </div>
             ))}

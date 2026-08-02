@@ -10,6 +10,7 @@ import { speedService } from "@/services/speed.service";
 import { ispService } from "@/services/isp.service";
 import { Activity, Shield, Globe, Wifi, EthernetPortIcon, WifiOffIcon, CheckCircle2 } from "lucide-react";
 import { analyticsService } from "@/services/analytics.service";
+import { getRetryMessage, shouldRetryMeasurement } from "@/services/speed-test-retry";
 
 const phaseConfig: Record<string, { label: string; color: string; description: string }> = {
   idle: { label: "Ready", color: "#ffffff", description: "Start the test to measure your connection" },
@@ -20,6 +21,7 @@ const phaseConfig: Record<string, { label: string; color: string; description: s
   downloading: { label: "Testing Download Speed...", color: "#00D9FF", description: "Measuring download throughput" },
   uploading: { label: "Testing Upload Speed...", color: "#FFC107", description: "Measuring upload throughput" },
   calculatingQuality: { label: "Calculating Network Quality...", color: "#00FF88", description: "Computing your network quality score" },
+  retrying: { label: "Retrying Measurement...", color: "#FFC107", description: "The previous sample was unstable, so we are trying again" },
   complete: { label: "Complete", color: "#00FF88", description: "Test finished. Results below." },
   error: { label: "Error", color: "#FF3B30", description: "Something went wrong. Please try again." },
 };
@@ -80,6 +82,9 @@ export function SpeedTestRunner() {
     stopTest,
     completeTest,
     resetTest,
+    retryCount,
+    incrementRetryCount,
+    resetRetryCount,
     setError,
     setISP,
     setConnectionType,
@@ -87,7 +92,7 @@ export function SpeedTestRunner() {
   } = useSpeedTestStore();
 
   const current = phaseConfig[status] || phaseConfig.idle;
-  const isRunning = ["initializing", "detectingNetwork", "selectingServer", "ping", "downloading", "uploading", "calculatingQuality"].includes(status);
+  const isRunning = ["initializing", "detectingNetwork", "selectingServer", "ping", "downloading", "uploading", "calculatingQuality", "retrying"].includes(status);
   const hasStartedRef = useRef(false);
 
   const displaySpeed = isRunning
@@ -133,83 +138,106 @@ export function SpeedTestRunner() {
     startTest();
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      useSpeedTestStore.getState().setStatus("detectingNetwork");
-
-      const connectionTypeValue =
-        (typeof navigator !== "undefined" && navigator.connection?.type) ||
-        (typeof navigator !== "undefined" && navigator.connection?.effectiveType) ||
-        null;
-      if (connectionTypeValue) {
-        setConnectionType(connectionTypeValue);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      useSpeedTestStore.getState().setStatus("selectingServer");
-      setSelectedServer({
-        name: "Auto",
-        host: "",
-        location: "Auto-detected",
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const detectedISP = await ispService.detectISP();
-      if (detectedISP) {
-        setISP(detectedISP);
-      }
-
-      useSpeedTestStore.getState().setStatus("ping");
-
-      const testResult = await speedService.runTest(
-        (phase, prog, data) => {
-          useSpeedTestStore.getState().setStatus(phase);
-          useSpeedTestStore.getState().setProgress(prog);
-          if (data) {
-            useSpeedTestStore.getState().setCurrentPhaseSpeed(data.instantaneousSpeed);
-          }
+      let attempt = 0;
+      while (attempt < 2) {
+        if (attempt > 0) {
+          useSpeedTestStore.getState().setStatus("retrying");
+          useSpeedTestStore.getState().setProgress(0);
+          incrementRetryCount();
+          await new Promise((resolve) => setTimeout(resolve, 1200));
         }
-      );
 
-      useSpeedTestStore.getState().setStatus("calculatingQuality");
-      await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        useSpeedTestStore.getState().setStatus("detectingNetwork");
 
-      const completedResult = {
-        ...testResult,
-        packetLoss: testResult.packetLoss ?? 0,
-      };
+        const connectionTypeValue =
+          (typeof navigator !== "undefined" && navigator.connection?.type) ||
+          (typeof navigator !== "undefined" && navigator.connection?.effectiveType) ||
+          null;
+        if (connectionTypeValue) {
+          setConnectionType(connectionTypeValue);
+        }
 
-      completeTest(completedResult);
+        await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const payload = {
-        download: completedResult.download,
-        upload: completedResult.upload,
-        ping: completedResult.ping,
-        jitter: completedResult.jitter,
-        packetLoss: completedResult.packetLoss,
-        isp: isp?.isp ?? null,
-        asn: isp?.connection?.asn ?? null,
-        country: isp?.country ?? null,
-        province: isp?.region ?? null,
-        district: null,
-        city: isp?.city ?? null,
-        latitude: null,
-        longitude: null,
-        browser: typeof navigator !== "undefined" ? navigator.userAgent : null,
-        operatingSystem: typeof navigator !== "undefined" ? navigator.platform : null,
-        deviceType: typeof navigator !== "undefined" ? (/(tablet|ipad|android)/i.test(navigator.userAgent) ? "Tablet" : /(mobile|iphone|android)/i.test(navigator.userAgent) ? "Mobile" : "Desktop") : null,
-        networkType: connectionType || null,
-        server: selectedServer?.name ?? null,
-        ipAddress: isp?.ip ?? null,
-        timestamp: new Date().toISOString(),
-      };
+        useSpeedTestStore.getState().setStatus("selectingServer");
+        setSelectedServer({
+          name: "Auto",
+          host: "",
+          location: "Auto-detected",
+        });
 
-      try {
-        await analyticsService.submitTest(payload);
-      } catch (error) {
-        console.warn("Analytics submission failed", error);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const detectedISP = await ispService.detectISP();
+        if (detectedISP) {
+          setISP(detectedISP);
+        }
+
+        useSpeedTestStore.getState().setStatus("ping");
+
+        const testResult = await speedService.runTest(
+          (phase, prog, data) => {
+            useSpeedTestStore.getState().setStatus(phase);
+            useSpeedTestStore.getState().setProgress(prog);
+            if (data) {
+              useSpeedTestStore.getState().setCurrentPhaseSpeed(data.instantaneousSpeed);
+            }
+          }
+        );
+
+        if (!shouldRetryMeasurement(testResult, attempt)) {
+          useSpeedTestStore.getState().setStatus("calculatingQuality");
+          await new Promise((resolve) => setTimeout(resolve, 800));
+
+          const completedResult = {
+            ...testResult,
+            packetLoss: testResult.packetLoss ?? 0,
+          };
+
+          completeTest(completedResult);
+
+          const payload = {
+            download: completedResult.download,
+            upload: completedResult.upload,
+            ping: completedResult.ping,
+            jitter: completedResult.jitter,
+            packetLoss: completedResult.packetLoss,
+            isp: isp?.isp ?? null,
+            asn: isp?.connection?.asn ?? null,
+            country: isp?.country ?? null,
+            province: isp?.region ?? null,
+            district: null,
+            city: isp?.city ?? null,
+            latitude: null,
+            longitude: null,
+            browser: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            operatingSystem: typeof navigator !== "undefined" ? navigator.platform : null,
+            deviceType: typeof navigator !== "undefined" ? (/(tablet|ipad|android)/i.test(navigator.userAgent) ? "Tablet" : /(mobile|iphone|android)/i.test(navigator.userAgent) ? "Mobile" : "Desktop") : null,
+            networkType: connectionType || null,
+            server: selectedServer?.name ?? null,
+            ipAddress: isp?.ip ?? null,
+            timestamp: new Date().toISOString(),
+          };
+
+          try {
+            await analyticsService.submitTest(payload);
+          } catch (error) {
+            console.warn("Analytics submission failed", error);
+          }
+
+          return;
+        }
+
+        attempt += 1;
+        if (attempt < 2) {
+          useSpeedTestStore.getState().setStatus("retrying");
+          useSpeedTestStore.getState().setError(getRetryMessage(attempt - 1));
+          await new Promise((resolve) => setTimeout(resolve, 900));
+        }
       }
+
+      setError("Test failed. Please try again.");
     } catch {
       setError("Test failed. Please try again.");
     }
@@ -217,6 +245,7 @@ export function SpeedTestRunner() {
 
   const handleReset = () => {
     hasStartedRef.current = false;
+    resetRetryCount();
     resetTest();
     runAutoTest();
   };
@@ -294,6 +323,26 @@ export function SpeedTestRunner() {
               exit={{ opacity: 0, y: -10 }}
             >
               <SplashScreen />
+            </motion.div>
+          )}
+
+          {status === "retrying" && (
+            <motion.div
+              key="retrying"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 animate-pulse text-secondary" />
+                <span className="text-sm font-medium tracking-widest uppercase text-secondary">
+                  Retrying Measurement...
+                </span>
+              </div>
+              <p className="text-xs text-text-secondary text-center max-w-md">
+                {error || "The previous sample was unstable, so I’m trying again with a fresh measurement."}
+              </p>
             </motion.div>
           )}
 

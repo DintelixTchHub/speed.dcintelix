@@ -53,6 +53,14 @@ export class AnalyticsService {
     return fetchAPI<Array<{ name: string; averageDownload: number; averageUpload: number; averagePing: number; averageJitter: number; packetLoss: number; tests: number; rank: number; trend: number }>>(`/api/analytics/isp-rankings?range=${encodeURIComponent(range)}`);
   }
 
+  async getRwandaOverview(): Promise<{ country: string; totalTests: number; averageDownload: number; averageUpload: number; averagePing: number; averageJitter: number; averagePacketLoss: number; testsToday: number; activeISPs: number; cities: number; }> {
+    return fetchAPI<{ country: string; totalTests: number; averageDownload: number; averageUpload: number; averagePing: number; averageJitter: number; averagePacketLoss: number; testsToday: number; activeISPs: number; cities: number; }>(`/api/analytics/rwanda?range=30d`);
+  }
+
+  async getRwandaIspRankings(range = "30d"): Promise<Array<{ name: string; rank: number; averageDownload: number; averageUpload: number; averagePing: number; averageJitter: number; packetLoss: number; tests: number; country: string }>> {
+    return fetchAPI<Array<{ name: string; rank: number; averageDownload: number; averageUpload: number; averagePing: number; averageJitter: number; packetLoss: number; tests: number; country: string }>>(`/api/analytics/rwanda/isp-rankings?range=${encodeURIComponent(range)}`);
+  }
+
   async getRegionalStats(): Promise<Array<{ country: string; province: string | null; district: string | null; city: string | null; averageDownload: number; averageUpload: number; averagePing: number; testCount: number }>> {
     return fetchAPI<Array<{ country: string; province: string | null; district: string | null; city: string | null; averageDownload: number; averageUpload: number; averagePing: number; testCount: number }>>(`/api/analytics/regional`);
   }

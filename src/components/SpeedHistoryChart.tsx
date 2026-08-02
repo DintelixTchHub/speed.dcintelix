@@ -8,6 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -15,16 +16,42 @@ import { TrendingUp } from "lucide-react";
 import { analyticsService } from "@/services/analytics.service";
 import { useQuery } from "@tanstack/react-query";
 
+type HistoryPoint = {
+  date: string;
+  download: number;
+  upload: number;
+  ping: number;
+};
+
+function renderLegend(props: any) {
+  const { payload } = props;
+  if (!payload || !Array.isArray(payload)) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 text-xs text-white rounded-2xl border border-white/10 bg-black/50 p-3 shadow-lg shadow-black/20">
+      {payload.map((entry: any) => (
+        <div key={entry.dataKey ?? entry.value} className="flex items-center gap-2">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span>{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SpeedHistoryChart() {
-  const { data: dailyData, isLoading } = useQuery<Array<{ date: string; count: number }>>({
-    queryKey: ["analytics", "daily"],
-    queryFn: () => analyticsService.getDailyStats<Array<{ date: string; count: number }>>(7),
+  const { data: historyData, isLoading } = useQuery<Array<HistoryPoint>>({
+    queryKey: ["analytics", "speedHistory"],
+    queryFn: () => analyticsService.getHistoricalTrend("30d"),
     staleTime: 60000,
   });
 
-  const data = (dailyData ?? []).map((item) => ({
+  const data = (historyData ?? []).map((item) => ({
     ...item,
-    date: item.date.split("-").slice(1).join("/"),
+    date: new Date(item.date).toLocaleDateString([], { month: "short", day: "numeric" }),
   }));
 
   return (
@@ -49,12 +76,6 @@ export function SpeedHistoryChart() {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-              <defs>
-                <linearGradient id="brandGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00FF88" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00FF88" stopOpacity={0} />
-                </linearGradient>
-              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis
                 dataKey="date"
@@ -75,13 +96,30 @@ export function SpeedHistoryChart() {
                 labelStyle={{ color: "#00FF88" }}
                 itemStyle={{ color: "#fff" }}
               />
+              <Legend content={renderLegend} />
               <Line
                 type="monotone"
-                dataKey="count"
+                dataKey="download"
                 stroke="#00FF88"
                 strokeWidth={2}
                 activeDot={{ r: 6, fill: "#00FF88", stroke: "#fff", strokeWidth: 2 }}
                 dot={{ r: 4, fill: "#00FF88", stroke: "#000", strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="upload"
+                stroke="#00D9FF"
+                strokeWidth={2}
+                activeDot={{ r: 6, fill: "#00D9FF", stroke: "#fff", strokeWidth: 2 }}
+                dot={{ r: 4, fill: "#00D9FF", stroke: "#000", strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="ping"
+                stroke="#FFC107"
+                strokeWidth={2}
+                activeDot={{ r: 6, fill: "#FFC107", stroke: "#fff", strokeWidth: 2 }}
+                dot={{ r: 4, fill: "#FFC107", stroke: "#000", strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>

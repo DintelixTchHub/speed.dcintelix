@@ -362,6 +362,10 @@ export interface ISPAnalytics {
   id: string;
   name: string;
   country: string | null;
+  province: string | null;
+  city: string | null;
+  location: string | null;
+  networkType: string | null;
   avgDownload: number;
   avgUpload: number;
   avgPing: number;
@@ -375,10 +379,18 @@ export async function getISPList(range = "30d"): Promise<ISPAnalytics[]> {
   type ISPGroup = {
     name: string;
     country: string | null;
+    province: string | null;
+    city: string | null;
+    location: string | null;
+    networkType: string | null;
     download: number[];
     upload: number[];
     ping: number[];
     count: number;
+    provinceCounts: Record<string, number>;
+    cityCounts: Record<string, number>;
+    networkTypeCounts: Record<string, number>;
+    locationCounts: Record<string, number>;
   };
 
   const grouped = new Map<string, ISPGroup>();
@@ -387,17 +399,55 @@ export async function getISPList(range = "30d"): Promise<ISPAnalytics[]> {
     const key = record.isp?.trim();
     if (!key) return;
 
+    const locationLabel = [record.city, record.province, record.country].filter(Boolean).join(", ") || null;
+
     const current: ISPGroup = grouped.get(key) ?? {
       name: key,
       country: record.country ?? null,
+      province: record.province ?? null,
+      city: record.city ?? null,
+      location: locationLabel,
+      networkType: record.networkType ?? null,
       download: [],
       upload: [],
       ping: [],
       count: 0,
+      provinceCounts: {},
+      cityCounts: {},
+      networkTypeCounts: {},
+      locationCounts: {},
     };
 
     if (!current.country && record.country) {
       current.country = record.country;
+    }
+
+    if (record.province) {
+      current.provinceCounts[record.province] = (current.provinceCounts[record.province] ?? 0) + 1;
+      if (!current.province || current.provinceCounts[record.province] > current.provinceCounts[current.province]) {
+        current.province = record.province;
+      }
+    }
+
+    if (record.city) {
+      current.cityCounts[record.city] = (current.cityCounts[record.city] ?? 0) + 1;
+      if (!current.city || current.cityCounts[record.city] > current.cityCounts[current.city]) {
+        current.city = record.city;
+      }
+    }
+
+    if (record.networkType) {
+      current.networkTypeCounts[record.networkType] = (current.networkTypeCounts[record.networkType] ?? 0) + 1;
+      if (!current.networkType || current.networkTypeCounts[record.networkType] > current.networkTypeCounts[current.networkType]) {
+        current.networkType = record.networkType;
+      }
+    }
+
+    if (locationLabel) {
+      current.locationCounts[locationLabel] = (current.locationCounts[locationLabel] ?? 0) + 1;
+      if (!current.location || current.locationCounts[locationLabel] > current.locationCounts[current.location]) {
+        current.location = locationLabel;
+      }
     }
 
     current.download.push(Number(record.download ?? 0));
@@ -418,6 +468,10 @@ export async function getISPList(range = "30d"): Promise<ISPAnalytics[]> {
         id: entry.name,
         name: entry.name,
         country: entry.country,
+        province: entry.province,
+        city: entry.city,
+        location: entry.location,
+        networkType: entry.networkType,
         avgDownload,
         avgUpload,
         avgPing,

@@ -1,4 +1,5 @@
 import { SpeedResult } from "@/store/useSpeedTestStore";
+import { calculateDownloadMbps, summarizeDownloadSpeeds } from "./download-speed";
 
 export interface SpeedTestConfig {
   duration: number;
@@ -167,6 +168,8 @@ export class SpeedService {
     let lastBytes = 0;
     let smoothedInstantSpeed = 0;
     const smoothingFactor = 0.35;
+    const minDurationMs = 2200;
+    const completionThresholdBytes = 20 * 1024 * 1024;
 
     try {
       const url = new URL(testUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost");
@@ -187,23 +190,34 @@ export class SpeedService {
         }
 
         let loadedBytes = 0;
+        let settled = false;
+        let maxProgress = 0;
 
-        xhr.onprogress = (event) => {
-          if (signal?.aborted) return;
+        const finishWithResult = (value: number, finalProgress = 100) => {
+          if (settled) return;
+          settled = true;
+          onProgress?.(finalProgress, value, value);
+          resolve(value);
+        };
+
+        const tick = (event: ProgressEvent<EventTarget>) => {
+          if (signal?.aborted || settled) return;
 
           loadedBytes = event.loaded;
           const now = performance.now();
           const elapsed = now - lastTime;
           const totalBytes = event.total || loadedBytes || 1;
+          const totalElapsedMs = now - startTime;
+          const enoughData = loadedBytes >= completionThresholdBytes || totalElapsedMs >= minDurationMs;
 
-          if (event.lengthComputable || elapsed >= 250 || loadedBytes >= totalBytes) {
+          if (event.lengthComputable || elapsed >= 250 || enoughData || loadedBytes >= totalBytes) {
             const delta = Math.max(loadedBytes - lastBytes, 0);
-            const instantMbps = delta > 0 ? this.bytesDeltaToMbps(delta, elapsed || 250) : 0;
+            const instantMbps = delta > 0 ? calculateDownloadMbps(delta, elapsed || 250) : 0;
             if (delta > 0) {
               speeds.push(instantMbps);
             }
 
-            const avgMbps = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+            const avgMbps = speeds.length ? summarizeDownloadSpeeds(speeds, instantMbps) : 0;
             smoothedInstantSpeed =
               smoothedInstantSpeed === 0
                 ? instantMbps
@@ -211,28 +225,38 @@ export class SpeedService {
 
             const progress = event.lengthComputable
               ? Math.min((loadedBytes / totalBytes) * 100, 100)
-              : 0;
+              : Math.min((totalElapsedMs / minDurationMs) * 100, 100);
+            maxProgress = Math.max(maxProgress, progress);
 
-            onProgress?.(progress, avgMbps, smoothedInstantSpeed);
+            onProgress?.(maxProgress, avgMbps, smoothedInstantSpeed);
             lastTime = now;
             lastBytes = loadedBytes;
           }
+
+          if (enoughData && loadedBytes > 0) {
+            const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0) || 0;
+            const finalMbps = calculateDownloadMbps(finalLoaded, totalElapsedMs || 250);
+            const rounded = Math.round(finalMbps * 10) / 10;
+            finishWithResult(rounded, Math.min(100, maxProgress + 5));
+          }
         };
+
+        xhr.onprogress = tick;
 
         xhr.onload = () => {
           const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
           typedXhr._abort?.();
           const totalSec = (performance.now() - startTime) / 1000;
           const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0) || 0;
-          const rounded =
-            totalSec > 0 && finalLoaded > 0
-              ? Math.round(((finalLoaded * 8) / (1024 * 1024 * totalSec)) * 10) / 10
-              : speeds.length
-                ? Math.round((speeds.reduce((a, b) => a + b, 0) / speeds.length) * 10) / 10
-                : 0;
+          const finalMbps = totalSec > 0 && finalLoaded > 0 ? calculateDownloadMbps(finalLoaded, totalSec * 1000) : 0;
+          const rounded = Math.round(finalMbps * 10) / 10;
 
-          onProgress?.(100, rounded, rounded);
-          resolve(rounded);
+          if (rounded > 0) {
+            finishWithResult(rounded, 100);
+          } else {
+            const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
+            finishWithResult(Math.round(fallback * 10) / 10, 100);
+          }
         };
 
         xhr.onerror = () => {
@@ -245,6 +269,14 @@ export class SpeedService {
           const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
           typedXhr._abort?.();
           reject(new DOMException("Aborted", "AbortError"));
+        };
+
+        xhr.timeout = 15000;
+        xhr.ontimeout = () => {
+          const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
+          typedXhr._abort?.();
+          const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
+          finishWithResult(Math.round(fallback * 10) / 10, 100);
         };
 
         xhr.send();
@@ -270,6 +302,7 @@ export class SpeedService {
       payload[i] = i & 0xff;
     }
     const startTime = performance.now();
+    const minDurationMs = 2200;
 
     try {
       await new Promise<void>((resolve, reject) => {
@@ -286,9 +319,18 @@ export class SpeedService {
         let lastBytes = 0;
         let smoothedInstantSpeed = 0;
         const smoothingFactor = 0.35;
+        let settled = false;
+        let maxProgress = 0;
+
+        const finishWithResult = (value: number, finalProgress = 100) => {
+          if (settled) return;
+          settled = true;
+          onProgress?.(finalProgress, value, value);
+          resolve();
+        };
 
         xhr.upload.onprogress = (event) => {
-          if (signal?.aborted) {
+          if (signal?.aborted || settled) {
             xhr.abort();
             return;
           }
@@ -296,23 +338,28 @@ export class SpeedService {
           uploadedBytes = event.loaded || payload.byteLength;
           const now = performance.now();
           const elapsed = now - lastTime;
+          const totalElapsedMs = now - startTime;
           const totalBytes = event.total || payload.byteLength;
+          const enoughData = uploadedBytes >= totalBytes || totalElapsedMs >= minDurationMs;
 
-          if (event.lengthComputable || elapsed >= 250 || uploadedBytes >= totalBytes) {
+          if (event.lengthComputable || elapsed >= 250 || enoughData || uploadedBytes >= totalBytes) {
             const bytesDelta = Math.max(uploadedBytes - lastBytes, 0);
-            const instantMbps = bytesDelta > 0 ? this.bytesDeltaToMbps(bytesDelta, elapsed || 250) : 0;
+            const instantMbps = bytesDelta > 0 ? calculateDownloadMbps(bytesDelta, elapsed || 250) : 0;
             if (bytesDelta > 0) {
               speeds.push(instantMbps);
             }
 
-            const avgMbps = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+            const avgMbps = speeds.length ? summarizeDownloadSpeeds(speeds, instantMbps) : 0;
             smoothedInstantSpeed =
               smoothedInstantSpeed === 0
                 ? instantMbps
                 : smoothingFactor * instantMbps + (1 - smoothingFactor) * smoothedInstantSpeed;
-            const progress = Math.min((uploadedBytes / totalBytes) * 100, 100);
+            const progress = event.lengthComputable
+              ? Math.min((uploadedBytes / totalBytes) * 100, 100)
+              : Math.min((totalElapsedMs / minDurationMs) * 100, 100);
+            maxProgress = Math.max(maxProgress, progress);
 
-            onProgress?.(progress, avgMbps, smoothedInstantSpeed);
+            onProgress?.(maxProgress, avgMbps, smoothedInstantSpeed);
 
             lastTime = now;
             lastBytes = uploadedBytes;
@@ -321,7 +368,15 @@ export class SpeedService {
 
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            const totalTimeSec = (performance.now() - startTime) / 1000;
+            const finalMbps = totalTimeSec > 0 ? calculateDownloadMbps(dataSize, totalTimeSec * 1000) : 0;
+            const rounded = Math.round(finalMbps * 10) / 10;
+            if (rounded > 0) {
+              finishWithResult(rounded, 100);
+            } else {
+              const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
+              finishWithResult(Math.round(fallback * 10) / 10, 100);
+            }
           } else {
             reject(new Error("Upload failed"));
           }
@@ -329,6 +384,12 @@ export class SpeedService {
 
         xhr.onerror = () => reject(new Error("Upload failed"));
         xhr.onabort = () => reject(new DOMException("Aborted", "AbortError"));
+
+        xhr.timeout = 15000;
+        xhr.ontimeout = () => {
+          const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
+          finishWithResult(Math.round(fallback * 10) / 10, 100);
+        };
 
         if (signal) {
           const abortHandler = () => {

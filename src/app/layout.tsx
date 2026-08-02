@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "DCINTELIX CO LTD Internet Speed Performance",
+    default: "speed test by Dcintelix",
     template: "%s | DCINTELIX CO LTD",
   },
   description:

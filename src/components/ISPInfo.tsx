@@ -28,11 +28,12 @@ export function ISPInfo() {
 
   const topISP = isps[0];
   const hasISPs = isps.length > 0;
+  const totalUsers = isps.reduce((sum, isp) => sum + isp.users, 0);
 
   const stats = [
     {
       label: "Top ISP",
-      value: topISP ? topISP.name.split(" ")[0] : "N/A",
+      value: topISP ? topISP.name : "N/A",
       icon: Award,
       color: "brand",
     },
@@ -44,7 +45,7 @@ export function ISPInfo() {
     },
     {
       label: "Active Users",
-      value: topISP ? `${(topISP.users / 1000).toFixed(0)}K` : "N/A",
+      value: hasISPs ? `${totalUsers >= 1000 ? `${(totalUsers / 1000).toFixed(0)}K` : totalUsers}` : "N/A",
       icon: Users,
       color: "brand",
     },
@@ -141,11 +142,19 @@ export function ISPInfo() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-text-primary">{isp.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <MapPin className="w-3 h-3 text-text-secondary" />
-                      <span className="text-xs text-text-secondary">
-                        {isp.country ?? "Unknown"}
-                      </span>
+                    <div className="flex flex-col gap-1 mt-0.5 text-xs text-text-secondary">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-3 h-3 text-text-secondary" />
+                        <span>
+                          {isp.location ?? isp.country ?? "Unknown"}
+                        </span>
+                      </div>
+                      {isp.networkType && (
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">Type:</span>
+                          <span>{isp.networkType}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type TestStatus = "idle" | "initializing" | "detectingNetwork" | "selectingServer" | "ping" | "downloading" | "uploading" | "calculatingQuality" | "complete" | "error";
+export type TestStatus = "idle" | "initializing" | "detectingNetwork" | "selectingServer" | "ping" | "downloading" | "uploading" | "calculatingQuality" | "complete" | "error" | "retrying";
 
 export interface SpeedResult {
   download: number;
@@ -46,6 +46,7 @@ interface SpeedTestState {
   connectionType: string | null;
   selectedServer: ServerInfo | null;
   startTime: number | null;
+  retryCount: number;
   advancedDetailsExpanded: boolean;
   startTest: () => void;
   stopTest: () => void;
@@ -55,6 +56,8 @@ interface SpeedTestState {
   setStatus: (status: TestStatus) => void;
   setProgress: (progress: number) => void;
   setCurrentPhaseSpeed: (speed: number) => void;
+  incrementRetryCount: () => void;
+  resetRetryCount: () => void;
   setISP: (isp: IPInfo | null) => void;
   setDetectingISP: (isDetecting: boolean) => void;
   setConnectionType: (type: string | null) => void;
@@ -74,6 +77,7 @@ export const useSpeedTestStore = create<SpeedTestState>((set) => ({
   connectionType: null,
   selectedServer: null,
   startTime: null,
+  retryCount: 0,
   advancedDetailsExpanded: false,
 
   startTest: () =>
@@ -88,6 +92,7 @@ export const useSpeedTestStore = create<SpeedTestState>((set) => ({
       connectionType: null,
       selectedServer: null,
       startTime: Date.now(),
+      retryCount: 0,
       advancedDetailsExpanded: false,
     }),
 
@@ -129,6 +134,7 @@ export const useSpeedTestStore = create<SpeedTestState>((set) => ({
       connectionType: null,
       selectedServer: null,
       startTime: null,
+      retryCount: 0,
       advancedDetailsExpanded: false,
     }),
 
@@ -145,6 +151,16 @@ export const useSpeedTestStore = create<SpeedTestState>((set) => ({
   setCurrentPhaseSpeed: (speed) =>
     set({
       currentPhaseSpeed: speed,
+    }),
+
+  incrementRetryCount: () =>
+    set((state) => ({
+      retryCount: state.retryCount + 1,
+    })),
+
+  resetRetryCount: () =>
+    set({
+      retryCount: 0,
     }),
 
   setISP: (isp) =>
