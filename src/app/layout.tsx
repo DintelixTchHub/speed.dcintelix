@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, UnifrakturCook } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { AppBootLoader } from "@/components/AppBootLoader";
 import { Providers } from "@/components/Providers";
 import { ToastContainer } from "@/components/Toast";
@@ -13,12 +13,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
-
-const fraktur = UnifrakturCook({
-  variable: "--font-fraktur",
-  subsets: ["latin"],
-  weight: ["700"],
 });
 
 export const viewport: Viewport = {
@@ -169,7 +163,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraktur.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <link rel="icon" type="image/png" href="/dc-speed-icon-logo.png" />
