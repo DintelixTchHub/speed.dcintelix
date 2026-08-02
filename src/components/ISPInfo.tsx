@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Globe, Users, TrendingUp, Award, Server, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ISP } from "@/services/isp.service";
+import { ISP, ispService } from "@/services/isp.service";
 import { cn } from "@/lib/utils";
 
 export function ISPInfo() {
@@ -14,11 +14,8 @@ export function ISPInfo() {
   useEffect(() => {
     const loadISPs = async () => {
       try {
-        const response = await fetch("/api/isps", { cache: "no-store" });
-        if (response.ok) {
-          const data = await response.json();
-          setIsps(Array.isArray(data) ? data : []);
-        }
+        const data = await ispService.getISPList();
+        setIsps(Array.isArray(data) ? data : []);
       } catch {
         setIsps([]);
       } finally {
@@ -30,6 +27,7 @@ export function ISPInfo() {
   }, []);
 
   const topISP = isps[0];
+  const hasISPs = isps.length > 0;
 
   const stats = [
     {
@@ -74,27 +72,6 @@ export function ISPInfo() {
         </div>
         <GlassCard className="p-8 text-center text-text-secondary">
           Loading ISP data...
-        </GlassCard>
-      </motion.div>
-    );
-  }
-
-  if (!isps.length) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        className="w-full max-w-4xl mx-auto"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <Globe className="w-5 h-5 text-brand" />
-          <h3 className="text-lg font-semibold text-text-primary">
-            ISP Rankings
-          </h3>
-        </div>
-        <GlassCard className="p-8 text-center text-text-secondary">
-          No ISP data available.
         </GlassCard>
       </motion.div>
     );
@@ -149,49 +126,55 @@ export function ISPInfo() {
           Leading Providers
         </h4>
         <div className="space-y-3">
-          {isps.slice(0, 5).map((isp, index) => (
-            <motion.div
-              key={isp.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.05 * index }}
-              className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-background bg-gradient-to-r from-brand to-secondary">
-                  {index + 1}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-text-primary">{isp.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <MapPin className="w-3 h-3 text-text-secondary" />
-                    <span className="text-xs text-text-secondary">
-                      {isp.country}
-                    </span>
+          {hasISPs ? (
+            isps.slice(0, 5).map((isp, index) => (
+              <motion.div
+                key={isp.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 * index }}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-background bg-linear-to-r from-brand to-secondary">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">{isp.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <MapPin className="w-3 h-3 text-text-secondary" />
+                      <span className="text-xs text-text-secondary">
+                        {isp.country ?? "Unknown"}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <p className="text-sm font-mono font-semibold text-text-primary">
-                    {isp.avgDownload} Mbps
-                  </p>
-                  <p className="text-xs text-text-secondary">DL</p>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-semibold text-text-primary">
+                      {isp.avgDownload} Mbps
+                    </p>
+                    <p className="text-xs text-text-secondary">DL</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-semibold text-text-primary">
+                      {isp.avgUpload} Mbps
+                    </p>
+                    <p className="text-xs text-text-secondary">UL</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-semibold text-yellow-500">
+                      ⭐ {isp.rating}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-mono font-semibold text-text-primary">
-                    {isp.avgUpload} Mbps
-                  </p>
-                  <p className="text-xs text-text-secondary">UL</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-mono font-semibold text-yellow-500">
-                    ⭐ {isp.rating}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))
+          ) : (
+            <GlassCard className="p-8 text-center text-text-secondary">
+              No ISP data available.
+            </GlassCard>
+          )}
         </div>
       </GlassCard>
     </motion.div>

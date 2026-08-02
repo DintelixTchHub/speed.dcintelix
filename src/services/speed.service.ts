@@ -163,6 +163,10 @@ export class SpeedService {
 
     const startTime = performance.now();
     const speeds: number[] = [];
+    let lastTime = startTime;
+    let lastBytes = 0;
+    let smoothedInstantSpeed = 0;
+    const smoothingFactor = 0.35;
 
     try {
       const url = new URL(testUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost");
@@ -183,29 +187,35 @@ export class SpeedService {
         }
 
         let loadedBytes = 0;
-        let lastTime = startTime;
-        let lastBytes = 0;
 
         xhr.onprogress = (event) => {
           if (signal?.aborted) return;
 
-          if (event.lengthComputable) {
-            loadedBytes = event.loaded;
-            const now = performance.now();
-            const elapsed = now - lastTime;
-            const delta = loadedBytes - lastBytes;
+          loadedBytes = event.loaded;
+          const now = performance.now();
+          const elapsed = now - lastTime;
+          const totalBytes = event.total || loadedBytes || 1;
 
-            if (elapsed >= 180 && delta > 0) {
-              const instantMbps = this.bytesDeltaToMbps(delta, elapsed);
+          if (event.lengthComputable || elapsed >= 250 || loadedBytes >= totalBytes) {
+            const delta = Math.max(loadedBytes - lastBytes, 0);
+            const instantMbps = delta > 0 ? this.bytesDeltaToMbps(delta, elapsed || 250) : 0;
+            if (delta > 0) {
               speeds.push(instantMbps);
-              const avgMbps = speeds.reduce((a, b) => a + b, 0) / speeds.length;
-              const progress = Math.min((loadedBytes / (event.total || 1)) * 100, 100);
-              onProgress?.(progress, avgMbps, instantMbps);
-              lastTime = now;
-              lastBytes = loadedBytes;
             }
-          } else if (event.loaded > 0) {
-            loadedBytes = event.loaded;
+
+            const avgMbps = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+            smoothedInstantSpeed =
+              smoothedInstantSpeed === 0
+                ? instantMbps
+                : smoothingFactor * instantMbps + (1 - smoothingFactor) * smoothedInstantSpeed;
+
+            const progress = event.lengthComputable
+              ? Math.min((loadedBytes / totalBytes) * 100, 100)
+              : 0;
+
+            onProgress?.(progress, avgMbps, smoothedInstantSpeed);
+            lastTime = now;
+            lastBytes = loadedBytes;
           }
         };
 

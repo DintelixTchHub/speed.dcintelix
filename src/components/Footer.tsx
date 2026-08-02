@@ -28,7 +28,7 @@ export function Footer() {
       transition={{ delay: 1.2 }}
       className="w-full max-w-6xl mx-auto mt-20 pt-8 pb-10 border-t border-glass-border"
     >
-      <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+      <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-white">
             <Globe className="w-5 h-5 text-brand" />
@@ -63,29 +63,31 @@ export function Footer() {
           </ul>
         </div>
 
-        <div>
-          <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-text-secondary">
-            Legal
-          </h4>
-          <ul className="space-y-2 text-sm text-text-secondary">
-            {legalLinks.map((link) => (
-              <li key={link.label}>
-                <a href={link.href} className="transition-colors hover:text-brand">
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
+          <div>
+            <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-text-secondary">
+              Legal
+            </h4>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              {legalLinks.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="transition-colors hover:text-brand">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div>
-          <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-text-secondary">
-            Company
-          </h4>
-          <ul className="space-y-2 text-sm text-text-secondary">
-            <li>DCintelix</li>
-            <li>www.dcintelix.rw</li>
-          </ul>
+          <div>
+            <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-text-secondary">
+              Company
+            </h4>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              <li>DCintelix</li>
+              <li>www.dcintelix.rw</li>
+            </ul>
+          </div>
         </div>
       </div>
 

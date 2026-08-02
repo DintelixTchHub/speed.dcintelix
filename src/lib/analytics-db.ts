@@ -358,6 +358,76 @@ export async function getHourlyTrend() {
   return Array.from(map.entries()).map(([hour, load]) => ({ hour, load }));
 }
 
+export interface ISPAnalytics {
+  id: string;
+  name: string;
+  country: string | null;
+  avgDownload: number;
+  avgUpload: number;
+  avgPing: number;
+  users: number;
+  rating: number;
+}
+
+export async function getISPList(range = "30d"): Promise<ISPAnalytics[]> {
+  const records = await getAnalyticsSnapshot(range);
+
+  type ISPGroup = {
+    name: string;
+    country: string | null;
+    download: number[];
+    upload: number[];
+    ping: number[];
+    count: number;
+  };
+
+  const grouped = new Map<string, ISPGroup>();
+
+  records.forEach((record) => {
+    const key = record.isp?.trim();
+    if (!key) return;
+
+    const current: ISPGroup = grouped.get(key) ?? {
+      name: key,
+      country: record.country ?? null,
+      download: [],
+      upload: [],
+      ping: [],
+      count: 0,
+    };
+
+    if (!current.country && record.country) {
+      current.country = record.country;
+    }
+
+    current.download.push(Number(record.download ?? 0));
+    current.upload.push(Number(record.upload ?? 0));
+    current.ping.push(Number(record.ping ?? 0));
+    current.count += 1;
+    grouped.set(key, current);
+  });
+
+  return Array.from(grouped.values())
+    .map((entry) => {
+      const avgDownload = Number(average(entry.download).toFixed(2));
+      const avgUpload = Number(average(entry.upload).toFixed(2));
+      const avgPing = Number(average(entry.ping).toFixed(2));
+      const rating = avgDownload > 0 ? Math.min(5, Math.max(1, Math.round(avgDownload / 40))) : 0;
+
+      return {
+        id: entry.name,
+        name: entry.name,
+        country: entry.country,
+        avgDownload,
+        avgUpload,
+        avgPing,
+        users: entry.count,
+        rating,
+      };
+    })
+    .sort((left, right) => right.avgDownload - left.avgDownload);
+}
+
 export async function getIspRankings(range = "30d") {
   const records = await getAnalyticsSnapshot(range);
   type ISPGroup = {
