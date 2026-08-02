@@ -7,6 +7,7 @@ export interface SpeedResult {
   upload: number;
   ping: number;
   jitter: number;
+  packetLoss?: number;
   qualityScore: number;
   timestamp: Date;
 }

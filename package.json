@@ -10,9 +10,15 @@
     "smoke:speedtest": "node scripts/smoke-speedtest.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "prepare": "husky",
-    "sitemap": "next-sitemap"
+    "sitemap": "next-sitemap",
+    "db": "prisma",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@tanstack/react-query": "^5.101.4",
@@ -21,6 +27,7 @@
     "framer-motion": "^12.43.0",
     "lucide-react": "^0.468.0",
     "next": "16.2.12",
+    "prisma": "^7.9.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.83.0",

@@ -33,15 +33,15 @@ export function HUDMeter({
   };
 
   const sizeClasses = {
-    sm: "w-24 h-24",
-    md: "w-32 h-32",
-    lg: "w-48 h-48",
+    sm: "w-20 h-20",
+    md: "w-28 h-28 sm:w-32 sm:h-32",
+    lg: "w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48",
   };
 
   const textSizes = {
-    sm: "text-lg",
-    md: "text-xl",
-    lg: "text-3xl",
+    sm: "text-base",
+    md: "text-xl sm:text-2xl",
+    lg: "text-2xl sm:text-3xl",
   };
 
   return (

@@ -1,6 +1,5 @@
 "use client";
 
-import { BrandMark } from "@/components/BrandMark";
 import { ReactNode, useEffect, useState } from "react";
 
 export function AppBootLoader({ children }: { children: ReactNode }) {
@@ -18,7 +17,7 @@ export function AppBootLoader({ children }: { children: ReactNode }) {
         <div className="app-loader__shell">
           <div className="app-loader__ring" aria-hidden="true" />
           <div className="app-loader__brand-wrap">
-            <BrandMark size={110} darkBackground className="app-loader__brand" />
+            <img src="/dc-speed-icon-logo.png" alt="DCintelix logo" className="app-loader__brand" />
           </div>
         </div>
         <p className="app-loader__label">Initializing DCINTELIX CO LTD network performance platform</p>

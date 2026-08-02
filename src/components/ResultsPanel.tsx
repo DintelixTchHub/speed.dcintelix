@@ -336,9 +336,9 @@ export function ResultsPanel() {
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-4xl px-4 sm:px-6 mx-auto"
     >
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className={cn("w-3 h-3 rounded-full animate-pulse")} style={{ backgroundColor: quality.color, boxShadow: `0 0 15px ${quality.color}` }} />
         <span className="text-sm font-medium tracking-widest uppercase text-text-secondary">
           Test Complete
@@ -348,8 +348,8 @@ export function ResultsPanel() {
         </span>
       </div>
 
-      <GlassCard className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <GlassCard className="p-6 sm:p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {metrics.map((metric, index) => (
             <motion.div
               key={metric.label}
@@ -409,7 +409,7 @@ export function ResultsPanel() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
-          className="mt-6 flex flex-wrap items-center justify-center gap-3"
+          className="mt-6 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3"
         >
           <NeoButton onClick={handleShare} variant="secondary" size="sm">
             <Share2 className="w-4 h-4" />

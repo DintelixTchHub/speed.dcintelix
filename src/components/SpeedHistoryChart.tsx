@@ -16,16 +16,16 @@ import { analyticsService } from "@/services/analytics.service";
 import { useQuery } from "@tanstack/react-query";
 
 export function SpeedHistoryChart() {
-  const { data: dailyData, isLoading } = useQuery({
+  const { data: dailyData, isLoading } = useQuery<Array<{ date: string; count: number }>>({
     queryKey: ["analytics", "daily"],
-    queryFn: () => analyticsService.getDailyStats(7),
+    queryFn: () => analyticsService.getDailyStats<Array<{ date: string; count: number }>>(7),
     staleTime: 60000,
   });
 
-  const data = dailyData?.map((item: { date: string; count: number }) => ({
+  const data = (dailyData ?? []).map((item) => ({
     ...item,
     date: item.date.split("-").slice(1).join("/"),
-  })) || [];
+  }));
 
   return (
     <motion.div

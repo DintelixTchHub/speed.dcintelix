@@ -9,6 +9,7 @@ import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 import { speedService } from "@/services/speed.service";
 import { ispService } from "@/services/isp.service";
 import { Activity, Shield, Globe, Wifi, EthernetPortIcon, WifiOffIcon, CheckCircle2 } from "lucide-react";
+import { analyticsService } from "@/services/analytics.service";
 
 const phaseConfig: Record<string, { label: string; color: string; description: string }> = {
   idle: { label: "Ready", color: "#ffffff", description: "Start the test to measure your connection" },
@@ -174,7 +175,41 @@ export function SpeedTestRunner() {
       useSpeedTestStore.getState().setStatus("calculatingQuality");
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      completeTest(testResult);
+      const completedResult = {
+        ...testResult,
+        packetLoss: testResult.packetLoss ?? 0,
+      };
+
+      completeTest(completedResult);
+
+      const payload = {
+        download: completedResult.download,
+        upload: completedResult.upload,
+        ping: completedResult.ping,
+        jitter: completedResult.jitter,
+        packetLoss: completedResult.packetLoss,
+        isp: isp?.isp ?? null,
+        asn: isp?.connection?.asn ?? null,
+        country: isp?.country ?? null,
+        province: isp?.region ?? null,
+        district: null,
+        city: isp?.city ?? null,
+        latitude: null,
+        longitude: null,
+        browser: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        operatingSystem: typeof navigator !== "undefined" ? navigator.platform : null,
+        deviceType: typeof navigator !== "undefined" ? (/(tablet|ipad|android)/i.test(navigator.userAgent) ? "Tablet" : /(mobile|iphone|android)/i.test(navigator.userAgent) ? "Mobile" : "Desktop") : null,
+        networkType: connectionType || null,
+        server: selectedServer?.name ?? null,
+        ipAddress: isp?.ip ?? null,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        await analyticsService.submitTest(payload);
+      } catch (error) {
+        console.warn("Analytics submission failed", error);
+      }
     } catch {
       setError("Test failed. Please try again.");
     }
@@ -187,14 +222,14 @@ export function SpeedTestRunner() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-4xl mx-auto">
+    <div className="flex flex-col items-center gap-8 w-full max-w-4xl px-4 sm:px-6 mx-auto">
       <motion.div
         className="relative flex flex-col items-center"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
       >
-        <motion.div className="relative">
+        <motion.div className="relative w-full max-w-[420px] sm:max-w-[480px]">
           <SpeedGauge
             speed={displaySpeed}
             label={gaugeLabel}
@@ -234,7 +269,7 @@ export function SpeedTestRunner() {
         </motion.div>
 
         {isRunning && (
-          <motion.div className="w-64 h-1 bg-glass-border rounded-full overflow-hidden mt-4">
+          <motion.div className="w-full max-w-md h-1 bg-glass-border rounded-full overflow-hidden mt-4">
             <motion.div
               className="h-full bg-gradient-to-r from-brand to-secondary"
               animate={{ width: `${progress}%` }}
@@ -341,7 +376,7 @@ export function SpeedTestRunner() {
                   </div>
                 )}
               </div>
-              <NeoButton onClick={stopTest} variant="secondary">
+              <NeoButton onClick={stopTest} variant="secondary" size="sm">
                 Stop Test
               </NeoButton>
             </motion.div>
@@ -373,7 +408,7 @@ export function SpeedTestRunner() {
                   </div>
                 )}
               </div>
-              <NeoButton onClick={handleReset} variant="outline">
+              <NeoButton onClick={handleReset} variant="outline" size="sm">
                 Test Again
               </NeoButton>
             </motion.div>
@@ -394,7 +429,7 @@ export function SpeedTestRunner() {
               <p className="text-xs text-text-secondary text-center max-w-md">
                 {error || "Something went wrong. Please try again."}
               </p>
-              <NeoButton onClick={handleReset} variant="outline">
+              <NeoButton onClick={handleReset} variant="outline" size="sm">
                 Test Again
               </NeoButton>
             </motion.div>

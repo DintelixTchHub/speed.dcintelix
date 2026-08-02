@@ -7,6 +7,7 @@ import { ISPInfo } from "@/components/ISPInfo";
 import { SpeedHistoryChart } from "@/components/SpeedHistoryChart";
 import { AdvancedDetails } from "@/components/AdvancedDetails";
 import { Footer } from "@/components/Footer";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 
 export default function HomePage() {
@@ -21,6 +22,7 @@ export default function HomePage() {
           {showHomepageAd && <AdBanner location="homepage" />}
           <ISPInfo />
           <AdBanner location="results" />
+          <AnalyticsDashboard />
           <AdvancedDetails />
           <AdBanner location="footer" />
           <SpeedHistoryChart />

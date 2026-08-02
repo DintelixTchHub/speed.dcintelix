@@ -40,6 +40,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   overflow-x: hidden;
 }
 
@@ -77,8 +79,7 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 1.25rem;
-  background: rgba(4, 8, 18, 0.94);
-  backdrop-filter: blur(12px);
+  background: #000000;
   transition: opacity 0.45s ease, visibility 0.45s ease;
 }
 
@@ -127,6 +128,9 @@ html, body {
 
 .app-loader__brand {
   display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100px;
   filter: drop-shadow(0 0 18px rgba(0, 255, 136, 0.45));
 }
 
@@ -135,6 +139,9 @@ html, body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  max-width: 260px;
+  padding: 0 0.75rem;
 }
 
 @keyframes appLoaderSpin {
@@ -146,6 +153,90 @@ html, body {
   }
   100% {
     transform: rotate(360deg) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    font-size: 0.95rem;
+  }
+
+  .neo-button {
+    border-radius: 14px;
+  }
+
+  .app-loader__shell {
+    width: 150px;
+    height: 150px;
+  }
+
+  .app-loader__brand-wrap {
+    width: 92px;
+    height: 92px;
+  }
+}
+
+@media (max-width: 425px) {
+  html {
+    font-size: 13px;
+  }
+
+  body {
+    font-size: 0.9rem;
+  }
+
+  .neo-button {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.82rem;
+  }
+
+  .app-loader__shell {
+    width: 132px;
+    height: 132px;
+  }
+
+  .app-loader__brand-wrap {
+    width: 80px;
+    height: 80px;
+  }
+
+  .app-loader__label {
+    font-size: 0.7rem;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 375px) {
+  html {
+    font-size: 12.5px;
+  }
+
+  body {
+    font-size: 0.86rem;
+  }
+
+  .neo-button {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.72rem;
+  }
+
+  .app-loader__shell {
+    width: 120px;
+    height: 120px;
+  }
+
+  .app-loader__brand-wrap {
+    width: 72px;
+    height: 72px;
+  }
+
+  .app-loader__label {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
   }
 }
 
