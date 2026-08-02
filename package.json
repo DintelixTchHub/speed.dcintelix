@@ -10,6 +10,7 @@
     "smoke:speedtest": "node scripts/smoke-speedtest.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "prepare": "husky",
+    "postinstall": "prisma generate",
     "sitemap": "next-sitemap",
     "db": "prisma",
     "db:migrate": "prisma migrate dev",
