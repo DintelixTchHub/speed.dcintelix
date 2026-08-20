@@ -16,7 +16,7 @@ export function AdBanner({ location, className }: AdBannerProps) {
   };
 
   return (
-    <div className={cn("w-full max-w-4xl mx-auto my-8", className)}>
+    <div className={cn("w-full max-w-4xl mx-auto my-6", className)}>
       <ResponsiveAd {...formatConfig[location]} slot={`ad-${location}`} />
     </div>
   );

@@ -12,8 +12,6 @@ async function fetchAPI<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: "GET",
     headers: { Accept: "application/json" },
-    cache: "no-store",
-    next: { revalidate: 0 },
     ...init,
   });
 

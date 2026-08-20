@@ -1,8 +1,7 @@
 export interface RetryableMeasurement {
-  download: number;
-  upload: number;
-  ping: number;
-  jitter: number;
+  downloadMbps: number;
+  uploadMbps: number;
+  latency: number;
 }
 
 export function shouldRetryMeasurement(result: RetryableMeasurement, attempt: number): boolean {
@@ -10,11 +9,11 @@ export function shouldRetryMeasurement(result: RetryableMeasurement, attempt: nu
     return false;
   }
 
-  const hasNoUsefulSignal = [result.download, result.upload, result.ping, result.jitter].some((value) => {
+  const hasNoUsefulSignal = [result.downloadMbps, result.uploadMbps, result.latency].some((value) => {
     return !Number.isFinite(value) || value <= 0;
   });
 
-  return hasNoUsefulSignal || (result.download < 0.1 && result.upload < 0.1 && result.ping < 1);
+  return hasNoUsefulSignal || (result.downloadMbps < 0.1 && result.uploadMbps < 0.1 && result.latency < 1);
 }
 
 export function getRetryMessage(attempt: number): string {

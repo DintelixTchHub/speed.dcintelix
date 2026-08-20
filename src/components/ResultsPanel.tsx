@@ -68,7 +68,7 @@ async function generateResultImage({
   connectionType,
   quality,
 }: {
-  result: { download: number; upload: number; ping: number; jitter: number; timestamp?: Date | string | number };
+  result: { testId: string; latency: number; downloadMbps: number; uploadMbps: number; server: { name: string; location: string } };
   isp?: { isp?: string; city?: string; country?: string; ip?: string } | null;
   connectionType?: string | null;
   quality: { label: string; color: string };
@@ -136,7 +136,7 @@ async function generateResultImage({
 
   ctx.fillStyle = "#FFFFFF";
   ctx.font = "700 90px sans-serif";
-  ctx.fillText(`${result.download.toFixed(1)}`, cardX + 52, cardY + 260);
+  ctx.fillText(`${result.downloadMbps.toFixed(1)}`, cardX + 52, cardY + 260);
   ctx.fillStyle = "rgba(255,255,255,0.75)";
   ctx.font = "600 30px sans-serif";
   ctx.fillText("Mbps download", cardX + 52, cardY + 310);
@@ -145,10 +145,8 @@ async function generateResultImage({
   const metricCardWidth = (cardWidth - 120) / 2;
   const metricCardHeight = 180;
   const metricCards = [
-    { label: "Upload", value: `${result.upload.toFixed(1)} Mbps`, color: "#00D9FF", x: cardX + 52, y: metricStartY },
-    { label: "Ping", value: `${result.ping.toFixed(0)} ms`, color: "#00FF88", x: cardX + 52 + metricCardWidth + 16, y: metricStartY },
-    { label: "Jitter", value: `${result.jitter.toFixed(0)} ms`, color: "#FFC107", x: cardX + 52, y: metricStartY + metricCardHeight + 24 },
-    { label: "Quality", value: quality.label, color: quality.color, x: cardX + 52 + metricCardWidth + 16, y: metricStartY + metricCardHeight + 24 },
+    { label: "Upload", value: `${result.uploadMbps.toFixed(1)} Mbps`, color: "#00D9FF", x: cardX + 52, y: metricStartY },
+    { label: "Latency", value: `${result.latency.toFixed(0)} ms`, color: "#00FF88", x: cardX + 52 + metricCardWidth + 16, y: metricStartY },
   ];
 
   metricCards.forEach((card) => {
@@ -176,7 +174,7 @@ async function generateResultImage({
     { label: "ISP", value: isp?.isp || "Unknown" },
     { label: "Connection", value: formatConnectionType(connectionType) },
     { label: "Location", value: `${isp?.city || "Unknown"}, ${isp?.country || "Unknown"}` },
-    { label: "Test Time", value: formatShareDate(result.timestamp) },
+    { label: "Server", value: result.server.name },
   ];
 
   ctx.fillStyle = "rgba(255,255,255,0.05)";
@@ -196,7 +194,7 @@ async function generateResultImage({
 
   ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.font = "600 20px sans-serif";
-  const footerText = `Public IP • ${isp?.ip || "Unknown"} • Quality score ${Math.max(0, Math.min(100, Math.round(result.download / 2)))}/100`;
+  const footerText = `Public IP • ${isp?.ip || "Unknown"} • Shared from DCintelix`;
   ctx.fillText(footerText, cardX + 52, cardHeight - 120);
 
   ctx.fillStyle = "rgba(255,255,255,0.45)";
@@ -225,31 +223,24 @@ export function ResultsPanel() {
   const metrics = [
     {
       label: "Download",
-      value: result.download,
+      value: result.downloadMbps,
       unit: "Mbps",
       icon: ArrowDown,
       color: "brand" as const,
     },
     {
       label: "Upload",
-      value: result.upload,
+      value: result.uploadMbps,
       unit: "Mbps",
       icon: ArrowUp,
       color: "secondary" as const,
     },
     {
-      label: "Ping",
-      value: result.ping,
+      label: "Latency",
+      value: result.latency,
       unit: "ms",
       icon: Clock,
       color: "brand" as const,
-    },
-    {
-      label: "Jitter",
-      value: result.jitter,
-      unit: "ms",
-      icon: Activity,
-      color: "secondary" as const,
     },
   ];
 
@@ -263,12 +254,12 @@ export function ResultsPanel() {
     return { label: "Poor", color: "#FF3B30" };
   };
 
-  const quality = getQuality(result.download);
+  const quality = getQuality(result.downloadMbps);
   const ConnectionIcon = connectionType === "ethernet" ? EthernetPortIcon : Wifi;
 
   const handleShare = async () => {
-    const shareText = `My internet speed: ${result.download.toFixed(1)} Mbps download, ${result.upload.toFixed(1)} Mbps upload, ${result.ping.toFixed(0)} ms ping and ${result.jitter.toFixed(0)} ms jitter. Quality: ${quality.label}. Shared from DCintelix.`;
-    const socialCaption = `⚡ My latest internet speed test result:\n${result.download.toFixed(1)} Mbps download • ${result.upload.toFixed(1)} Mbps upload\nPing: ${result.ping.toFixed(0)} ms • Jitter: ${result.jitter.toFixed(0)} ms\nQuality: ${quality.label}\n\nPerfect for WhatsApp, Instagram, and Facebook posts!`;
+    const shareText = `My internet speed: ${result.downloadMbps.toFixed(1)} Mbps download, ${result.uploadMbps.toFixed(1)} Mbps upload, ${result.latency.toFixed(0)} ms latency. Quality: ${quality.label}. Shared from DCintelix.`;
+    const socialCaption = `⚡ My latest internet speed test result:\n${result.downloadMbps.toFixed(1)} Mbps download • ${result.uploadMbps.toFixed(1)} Mbps upload\nLatency: ${result.latency.toFixed(0)} ms\nQuality: ${quality.label}\n\nPerfect for WhatsApp, Instagram, and Facebook posts!`;
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
     try {

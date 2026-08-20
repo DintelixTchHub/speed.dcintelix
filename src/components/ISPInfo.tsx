@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Globe, Users, TrendingUp, Award, Server, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -59,12 +58,7 @@ export function ISPInfo() {
 
   if (isLoading) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        className="w-full max-w-4xl mx-auto"
-      >
+      <div className="w-full max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <Globe className="w-5 h-5 text-brand" />
           <h3 className="text-lg font-semibold text-text-primary">
@@ -74,17 +68,12 @@ export function ISPInfo() {
         <GlassCard className="p-8 text-center text-text-secondary">
           Loading ISP data...
         </GlassCard>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.3 }}
-      className="w-full max-w-4xl mx-auto"
-    >
+    <div className="w-full max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Globe className="w-5 h-5 text-brand" />
         <h3 className="text-lg font-semibold text-text-primary">
@@ -93,32 +82,25 @@ export function ISPInfo() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * index + 0.3 }}
-          >
-            <GlassCard hover className="p-4">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                style={{
-                  backgroundColor: `${stat.color === "brand" ? "rgba(0,255,136,0.1)" : "rgba(0,217,255,0.1)"}`,
-                }}
-              >
-                <stat.icon
-                  className={cn("w-5 h-5", stat.color === "brand" ? "text-brand" : "text-secondary")}
-                />
-              </div>
-              <p className="text-2xl font-bold font-mono text-text-primary mb-1">
-                {stat.value}
-              </p>
-              <p className="text-xs text-text-secondary uppercase tracking-widest">
-                {stat.label}
-              </p>
-            </GlassCard>
-          </motion.div>
+        {stats.map((stat) => (
+          <GlassCard hover key={stat.label} className="p-4">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+              style={{
+                backgroundColor: `${stat.color === "brand" ? "rgba(0,255,136,0.1)" : "rgba(0,217,255,0.1)"}`,
+              }}
+            >
+              <stat.icon
+                className={cn("w-5 h-5", stat.color === "brand" ? "text-brand" : "text-secondary")}
+              />
+            </div>
+            <p className="text-2xl font-bold font-mono text-text-primary mb-1">
+              {stat.value}
+            </p>
+            <p className="text-xs text-text-secondary uppercase tracking-widest">
+              {stat.label}
+            </p>
+          </GlassCard>
         ))}
       </div>
 
@@ -129,11 +111,8 @@ export function ISPInfo() {
         <div className="space-y-3">
           {hasISPs ? (
             isps.slice(0, 5).map((isp, index) => (
-              <motion.div
+              <div
                 key={isp.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.05 * index }}
                 className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -177,7 +156,7 @@ export function ISPInfo() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))
           ) : (
             <GlassCard className="p-8 text-center text-text-secondary">
@@ -186,6 +165,6 @@ export function ISPInfo() {
           )}
         </div>
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }

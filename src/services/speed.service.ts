@@ -16,13 +16,13 @@ export interface SpeedTestConfig {
 const DEFAULT_CONFIG: SpeedTestConfig = {
   duration: 30,
   server: {
-    name: "Local Server",
+    name: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_NAME || "DCintelix Kigali",
     host: "",
-    location: "Local",
+    location: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_LOCATION || "Kigali, Rwanda",
   },
   downloadTestUrl: process.env.NEXT_PUBLIC_DOWNLOAD_TEST_URL || "/api/speedtest/download",
   uploadTestUrl: process.env.NEXT_PUBLIC_UPLOAD_TEST_URL || "/api/speedtest/upload",
-  pingTestUrl: "/api/ping",
+  pingTestUrl: "/api/speedtest/ping",
 };
 
 export interface SpeedProgress {
@@ -97,12 +97,11 @@ export class SpeedService {
       onProgress("uploading", 100, { averageSpeed: uploadSpeed, instantaneousSpeed: uploadSpeed });
 
       return {
-        download: downloadSpeed,
-        upload: uploadSpeed,
-        ping,
-        jitter,
-        qualityScore: calculateNetworkQualityScore(downloadSpeed, uploadSpeed, ping, jitter),
-        timestamp: new Date(),
+        testId: crypto.randomUUID(),
+        server: this.config.server,
+        latency: ping,
+        downloadMbps: downloadSpeed,
+        uploadMbps: uploadSpeed,
       };
     } catch (error) {
       if ((error as Error).name === "AbortError") {
@@ -126,7 +125,7 @@ export class SpeedService {
       const start = performance.now();
       try {
         await fetch(`${this.config.pingTestUrl}?t=${Date.now()}_${i}`, {
-          method: "HEAD",
+          method: "GET",
           cache: "no-store",
           signal,
         });

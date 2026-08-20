@@ -3,13 +3,14 @@ import { create } from "zustand";
 export type TestStatus = "idle" | "initializing" | "detectingNetwork" | "selectingServer" | "ping" | "downloading" | "uploading" | "calculatingQuality" | "complete" | "error" | "retrying";
 
 export interface SpeedResult {
-  download: number;
-  upload: number;
-  ping: number;
-  jitter: number;
-  packetLoss?: number;
-  qualityScore: number;
-  timestamp: Date;
+  testId: string;
+  server: {
+    name: string;
+    location: string;
+  };
+  latency: number;
+  downloadMbps: number;
+  uploadMbps: number;
 }
 
 export interface IPInfo {
@@ -109,7 +110,7 @@ export const useSpeedTestStore = create<SpeedTestState>((set) => ({
       progress: 100,
       result,
       testHistory: [result, ...state.testHistory.slice(0, 9)],
-      currentPhaseSpeed: result.download,
+      currentPhaseSpeed: result.downloadMbps,
       isDetectingISP: false,
     })),
 

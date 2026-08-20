@@ -4,10 +4,13 @@ export const runtime = "nodejs";
 
 export async function POST() {
   return NextResponse.json({
-    download: 0,
-    upload: 0,
-    ping: 0,
-    jitter: 0,
-    timestamp: new Date().toISOString(),
+    testId: "",
+    server: {
+      name: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_NAME || "DCintelix Kigali",
+      location: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_LOCATION || "Kigali, Rwanda",
+    },
+    latency: 0,
+    downloadMbps: 0,
+    uploadMbps: 0,
   });
 }

@@ -23,11 +23,11 @@ export function useRunSpeedTest() {
 
       const data = await response.json();
       return {
-        download: data.download,
-        upload: data.upload,
-        ping: data.ping,
-        jitter: data.jitter,
-        timestamp: new Date(),
+        testId: data.testId,
+        server: data.server,
+        latency: data.latency,
+        downloadMbps: data.downloadMbps,
+        uploadMbps: data.uploadMbps,
       };
     },
     onSuccess: () => {

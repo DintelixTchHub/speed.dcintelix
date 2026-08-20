@@ -1,20 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 import { Globe, MapPin, Monitor, Wifi, Server, Clock, ChevronDown, ChevronUp, FileText } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { cn } from "@/lib/utils";
 
 function getBrowserInfo(): string {
   if (typeof navigator === "undefined") return "Unknown";
@@ -77,24 +66,6 @@ function formatDuration(ms: number): string {
   return `${seconds}s`;
 }
 
-function generatePhaseData(
-  phase: "ping" | "downloading" | "uploading",
-  duration: number,
-  baseSpeed: number
-): { time: string; speed: number }[] {
-  const points: { time: string; speed: number }[] = [];
-  const now = new Date();
-  for (let i = 0; i <= 10; i++) {
-    const time = new Date(now.getTime() + (duration / 10) * i * 1000);
-    const variance = baseSpeed * 0.15;
-    points.push({
-      time: time.toLocaleTimeString([], { minute: "2-digit", second: "2-digit" }),
-      speed: Math.max(0, baseSpeed + (Math.random() - 0.5) * variance),
-    });
-  }
-  return points;
-}
-
 export function AdvancedDetails() {
   const { result, isp, selectedServer, status, startTime } = useSpeedTestStore();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -131,18 +102,8 @@ export function AdvancedDetails() {
     { label: "Test Duration", value: testDuration > 0 ? formatDuration(testDuration) : "Unknown", icon: Clock },
   ];
 
-  const downloadData = generatePhaseData("downloading", 15, result.download);
-  const uploadData = generatePhaseData("uploading", 15, result.upload);
-  const pingData = generatePhaseData("ping", 5, result.ping);
-
   return (
-    <motion.div
-      id="advanced-details"
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay: 0.3 }}
-      className="w-full max-w-4xl mx-auto"
-    >
+    <div id="advanced-details" className="w-full max-w-4xl mx-auto">
       <GlassCard className="p-0 overflow-hidden">
         <button
           onClick={() => {
@@ -165,107 +126,26 @@ export function AdvancedDetails() {
           )}
         </button>
 
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="px-6 pb-6 space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {details.map((detail, index) => (
-                    <motion.div
-                      key={detail.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                      className="p-3 rounded-xl bg-white/5 border border-glass-border"
-                    >
-                      <p className="text-xs text-text-secondary uppercase tracking-widest mb-1">
-                        {detail.label}
-                      </p>
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {detail.value}
-                      </p>
-                    </motion.div>
-                  ))}
+        {isExpanded && (
+          <div className="px-6 pb-6 space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {details.map((detail) => (
+                <div
+                  key={detail.label}
+                  className="p-3 rounded-xl bg-white/5 border border-glass-border"
+                >
+                  <p className="text-xs text-text-secondary uppercase tracking-widest mb-1">
+                    {detail.label}
+                  </p>
+                  <p className="text-sm font-medium text-text-primary truncate">
+                    {detail.value}
+                  </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-4 rounded-xl bg-white/5 border border-glass-border">
-                    <p className="text-xs text-text-secondary uppercase tracking-widest mb-3">Download Graph</p>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <LineChart data={downloadData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="time" stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <YAxis stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(0,0,0,0.8)",
-                            border: "1px solid rgba(0,255,136,0.3)",
-                            borderRadius: "8px",
-                            backdropFilter: "blur(10px)",
-                          }}
-                          labelStyle={{ color: "#00FF88" }}
-                          itemStyle={{ color: "#fff" }}
-                        />
-                        <Line type="monotone" dataKey="speed" stroke="#00FF88" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white/5 border border-glass-border">
-                    <p className="text-xs text-text-secondary uppercase tracking-widest mb-3">Upload Graph</p>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <LineChart data={uploadData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="time" stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <YAxis stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(0,0,0,0.8)",
-                            border: "1px solid rgba(0,217,255,0.3)",
-                            borderRadius: "8px",
-                            backdropFilter: "blur(10px)",
-                          }}
-                          labelStyle={{ color: "#00D9FF" }}
-                          itemStyle={{ color: "#fff" }}
-                        />
-                        <Line type="monotone" dataKey="speed" stroke="#00D9FF" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white/5 border border-glass-border">
-                    <p className="text-xs text-text-secondary uppercase tracking-widest mb-3">Ping Graph</p>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <LineChart data={pingData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                        <XAxis dataKey="time" stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <YAxis stroke="rgba(255,255,255,0.25)" tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 10 }} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(0,0,0,0.8)",
-                            border: "1px solid rgba(255,193,7,0.3)",
-                            borderRadius: "8px",
-                            backdropFilter: "blur(10px)",
-                          }}
-                          labelStyle={{ color: "#FFC107" }}
-                          itemStyle={{ color: "#fff" }}
-                        />
-                        <Line type="monotone" dataKey="speed" stroke="#FFC107" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              ))}
+            </div>
+          </div>
+        )}
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }

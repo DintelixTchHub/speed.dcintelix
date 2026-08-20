@@ -50,8 +50,6 @@ async function fetchAPI(endpoint: string) {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: "GET",
     headers: { Accept: "application/json" },
-    cache: "no-store",
-    next: { revalidate: 0 },
   });
 
   if (!response.ok) {
