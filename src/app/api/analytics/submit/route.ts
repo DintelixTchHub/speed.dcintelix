@@ -32,7 +32,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = payloadSchema.parse(body);
 
-    const record = await saveAnalyticsRecord(payload);
+    const record = await saveAnalyticsRecord({
+      download: payload.download,
+      upload: payload.upload,
+      ping: payload.ping,
+      jitter: payload.jitter ?? 0,
+      packetLoss: payload.packetLoss ?? 0,
+      isp: payload.isp ?? null,
+      asn: payload.asn ?? null,
+      country: payload.country ?? null,
+      province: payload.province ?? null,
+      district: payload.district ?? null,
+      city: payload.city ?? null,
+      latitude: payload.latitude ?? null,
+      longitude: payload.longitude ?? null,
+      browser: payload.browser ?? null,
+      operatingSystem: payload.operatingSystem ?? null,
+      deviceType: payload.deviceType ?? null,
+      networkType: payload.networkType ?? null,
+      server: payload.server ?? null,
+      ipAddress: payload.ipAddress ?? null,
+      timestamp: payload.timestamp ?? new Date(),
+    });
 
     return NextResponse.json({ ok: true, record }, { status: 201 });
   } catch (error) {
