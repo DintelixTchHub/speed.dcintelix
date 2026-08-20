@@ -41,22 +41,19 @@ interface SpeedTestResultsProps {
   result: SpeedResult;
   isp: IPInfo | null;
   connectionType: string | null;
+  selectedServer: ServerInfo | null;
   className?: string;
 }
 
-function MetricCard({
-  label,
-  value,
-  unit,
-  icon: Icon,
-  color = "brand",
-}: {
+function MetricCard(props: {
   label: string;
   value: number | string;
   unit: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color?: "brand" | "secondary" | "warning" | "error";
 }) {
+  const { label: lbl, value: val, unit: unt, icon: Icon, color } = props;
+  const safeColor: "brand" | "secondary" | "warning" | "error" = color ?? "brand";
   type ColorKey = "brand" | "secondary" | "warning" | "error";
   type ColorValue = { bg: string; text: string };
   const colorMap: Record<ColorKey, ColorValue> = {
@@ -71,18 +68,18 @@ function MetricCard({
       <div className="flex items-center gap-3">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: colorMap[color].bg }}
+          style={{ backgroundColor: colorMap.brand.bg }}
         >
-          <Icon className={cn("w-4 h-4", colorMap[color].text)} />
+          <Icon className={"w-4 h-4 " + colorMap.brand.text} />
         </div>
         <div>
           <p className="text-xl font-bold font-mono text-text-primary">
-            {typeof value === "number" ? value.toFixed(1) : value}
+            {typeof val === "number" ? val.toFixed(1) : val}
           </p>
-          <p className="text-xs text-text-secondary uppercase tracking-widest">{label}</p>
+          <p className="text-xs text-text-secondary uppercase tracking-widest">{lbl}</p>
         </div>
       </div>
-      <p className="text-xs text-text-secondary mt-2">{unit}</p>
+      <p className="text-xs text-text-secondary mt-2">{unt}</p>
     </GlassCard>
   );
 }
@@ -101,6 +98,7 @@ export function SpeedTestResults({
   result,
   isp,
   connectionType,
+  selectedServer,
   className,
 }: SpeedTestResultsProps) {
   return (
@@ -120,8 +118,8 @@ export function SpeedTestResults({
             </h4>
           </div>
           <div className="space-y-1">
-            <InfoRow label="Server" value={result.server.name} />
-            <InfoRow label="Server Location" value={result.server.location} />
+            <InfoRow label="Server" value={selectedServer?.name || result.server.name} />
+            <InfoRow label="Server Location" value={selectedServer?.location || result.server.location} />
             <InfoRow label="ISP" value={isp?.isp || isp?.org} />
             <InfoRow label="Country" value={isp?.country} />
             <InfoRow label="City" value={isp?.city} />
