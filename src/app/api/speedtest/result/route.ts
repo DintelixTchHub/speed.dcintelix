@@ -11,11 +11,11 @@ const resultSchema = z.object({
     })
     .optional()
     .nullable(),
-  latency: z.number().finite().nonNegative(),
-  downloadMbps: z.number().finite().nonNegative(),
-  uploadMbps: z.number().finite().nonNegative(),
-  jitter: z.number().finite().nonNegative().optional(),
-  packetLoss: z.number().finite().nonNegative().optional().nullable(),
+  latency: z.number().finite().nonnegative(),
+  downloadMbps: z.number().finite().nonnegative(),
+  uploadMbps: z.number().finite().nonnegative(),
+  jitter: z.number().finite().nonnegative().optional(),
+  packetLoss: z.number().finite().nonnegative().optional().nullable(),
   isp: z.string().optional().nullable(),
   asn: z.number().int().optional().nullable(),
   country: z.string().optional().nullable(),
