@@ -57,7 +57,9 @@ function MetricCard({
   icon: React.ElementType;
   color?: "brand" | "secondary" | "warning" | "error";
 }) {
-  const colorMap = {
+  type ColorKey = "brand" | "secondary" | "warning" | "error";
+  type ColorValue = { bg: string; text: string };
+  const colorMap: Record<ColorKey, ColorValue> = {
     brand: { bg: "rgba(0,255,136,0.1)", text: "text-brand" },
     secondary: { bg: "rgba(0,217,255,0.1)", text: "text-secondary" },
     warning: { bg: "rgba(255,193,7,0.1)", text: "text-yellow-500" },
