@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppBootLoader } from "@/components/AppBootLoader";
 import { Providers } from "@/components/Providers";
@@ -175,10 +176,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script
+        <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7311896348376608"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
         <Providers>
           <AppBootLoader>{children}</AppBootLoader>
