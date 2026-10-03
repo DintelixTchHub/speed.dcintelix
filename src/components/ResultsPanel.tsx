@@ -8,6 +8,7 @@ import { ArrowDown, ArrowUp, Clock, Activity, Globe, Wifi, EthernetPortIcon, Sha
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { cn } from "@/lib/utils";
 import { showToast } from "@/components/Toast";
+import type { SpeedResult } from "@/store/useSpeedTestStore";
 
 function formatConnectionType(type: string | null | undefined): string {
   if (!type) return "Unknown";
@@ -213,10 +214,11 @@ async function generateResultImage({
   });
 }
 
-export function ResultsPanel() {
-  const { result, status, isp, connectionType } = useSpeedTestStore();
+export function ResultsPanel({ resultOverride }: { resultOverride?: SpeedResult } = {}) {
+  const { result: currentResult, status, isp, connectionType } = useSpeedTestStore();
+  const result = resultOverride ?? currentResult;
 
-  if (status !== "complete" || !result) {
+  if ((!resultOverride && status !== "complete") || !result) {
     return null;
   }
 

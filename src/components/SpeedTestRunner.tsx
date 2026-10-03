@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { MinimalGauge } from "@/components/MinimalGauge";
 import { SpeedTestResults } from "@/components/SpeedTestResults";
 import { useSpeedTestStore } from "@/store/useSpeedTestStore";
@@ -10,6 +11,7 @@ import { useSubmitAnalyticsTest } from "@/services/api";
 import { getRetryMessage, shouldRetryMeasurement } from "@/services/speed-test-retry";
 
 export function SpeedTestRunner() {
+  const router = useRouter();
   const { mutateAsync: submitAnalytics } = useSubmitAnalyticsTest();
   const {
     status,
@@ -104,6 +106,7 @@ export function SpeedTestRunner() {
           const completedResult = testResult;
 
           completeTest(completedResult);
+          router.push(`/result/${encodeURIComponent(completedResult.testId)}`);
 
           const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
           const deviceType = /ipad|tablet/i.test(userAgent) || (/android/i.test(userAgent) && !/mobile/i.test(userAgent))
@@ -167,7 +170,7 @@ export function SpeedTestRunner() {
     } catch {
       setError("Test failed. Please try again.");
     }
-  }, [completeTest, connectionType, incrementRetryCount, setConnectionType, setError, setISP, setSelectedServer, startTest, submitAnalytics]);
+  }, [completeTest, connectionType, incrementRetryCount, router, setConnectionType, setError, setISP, setSelectedServer, startTest, submitAnalytics]);
 
   useEffect(() => {
     if (hasStartedRef.current || status !== "idle") return;
