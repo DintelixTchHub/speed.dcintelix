@@ -1,6 +1,5 @@
 import { SpeedResult } from "@/store/useSpeedTestStore";
 import { calculateDownloadMbps, summarizeDownloadSpeeds } from "./download-speed";
-import { backendApiUrl } from "../lib/backend-api";
 
 export interface SpeedTestConfig {
   duration: number;
@@ -17,15 +16,15 @@ export interface SpeedTestConfig {
 const DEFAULT_CONFIG: SpeedTestConfig = {
   duration: 30,
   server: {
-    name: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_NAME || "DCintelix Kigali",
+    name: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_NAME || "Cloudflare Edge",
     host: "",
-    location: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_LOCATION || "Kigali, Rwanda",
+    location: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_LOCATION || "Auto-selected location",
   },
   downloadTestUrl:
-    process.env.NEXT_PUBLIC_DOWNLOAD_TEST_URL || backendApiUrl("/api/speedtest/download"),
+    process.env.NEXT_PUBLIC_DOWNLOAD_TEST_URL || "https://speed.cloudflare.com/__down?bytes=25000000",
   uploadTestUrl:
-    process.env.NEXT_PUBLIC_UPLOAD_TEST_URL || backendApiUrl("/api/speedtest/upload"),
-  pingTestUrl: backendApiUrl("/api/speedtest/ping"),
+    process.env.NEXT_PUBLIC_UPLOAD_TEST_URL || "https://speed.cloudflare.com/__up",
+  pingTestUrl: process.env.NEXT_PUBLIC_PING_TEST_URL || "https://speed.cloudflare.com/__down?bytes=0",
 };
 
 export interface SpeedProgress {
@@ -125,10 +124,26 @@ export class SpeedService {
     const samples: number[] = [];
     const count = 5;
 
+    try {
+      const warmupUrl = new URL(
+        this.config.pingTestUrl,
+        typeof window !== "undefined" ? window.location.origin : "http://localhost"
+      );
+      warmupUrl.searchParams.set("t", `${Date.now()}_warmup`);
+      await fetch(warmupUrl.toString(), { cache: "no-store", signal });
+    } catch {
+      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    }
+
     for (let i = 0; i < count; i++) {
       const start = performance.now();
       try {
-        const response = await fetch(`${this.config.pingTestUrl}?t=${Date.now()}_${i}`, {
+        const pingUrl = new URL(
+          this.config.pingTestUrl,
+          typeof window !== "undefined" ? window.location.origin : "http://localhost"
+        );
+        pingUrl.searchParams.set("t", `${Date.now()}_${i}`);
+        const response = await fetch(pingUrl.toString(), {
           method: "GET",
           cache: "no-store",
           signal,
@@ -146,12 +161,18 @@ export class SpeedService {
       throw new Error("Latency measurement failed");
     }
 
-    const pingValues = samples;
-    const ping = Math.round(pingValues.reduce((a, b) => a + b, 0) / pingValues.length);
-    const jitter = pingValues.length > 1
-      ? Number((pingValues.slice(1)
-          .reduce((sum, value, index) => sum + Math.abs(value - pingValues[index]), 0) /
-          (pingValues.length - 1)).toFixed(1))
+    const sortedSamples = [...samples].sort((a, b) => a - b);
+    const middle = Math.floor(sortedSamples.length / 2);
+    const ping = Math.round(sortedSamples.length % 2 === 0
+      ? (sortedSamples[middle - 1] + sortedSamples[middle]) / 2
+      : sortedSamples[middle]);
+    const jitterSamples = samples.slice(1).map((value, index) => Math.abs(value - samples[index]));
+    const sortedJitter = jitterSamples.sort((a, b) => a - b);
+    const jitterMiddle = Math.floor(sortedJitter.length / 2);
+    const jitter = sortedJitter.length > 0
+      ? Number((sortedJitter.length % 2 === 0
+          ? (sortedJitter[jitterMiddle - 1] + sortedJitter[jitterMiddle]) / 2
+          : sortedJitter[jitterMiddle]).toFixed(1))
       : 0;
 
     return { ping, jitter };
@@ -179,8 +200,6 @@ export class SpeedService {
       return await new Promise<number>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url.toString(), true);
-        xhr.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-        xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "arraybuffer";
 
         let loadedBytes = 0;
@@ -310,8 +329,6 @@ export class SpeedService {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", "application/octet-stream");
-        xhr.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-        xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "text";
 
         let uploadedBytes = 0;

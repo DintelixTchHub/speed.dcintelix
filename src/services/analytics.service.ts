@@ -87,7 +87,9 @@ export class AnalyticsService {
     const submittedPayload = Object.fromEntries(
       Object.entries(payload).filter(([, value]) => {
         if (value === null || value === undefined) return false;
+        if (typeof value === "number" && !Number.isFinite(value)) return false;
         if (typeof value !== "string") return true;
+
         const normalized = value.trim().toLowerCase();
         return normalized !== "" && normalized !== "unknown";
       })

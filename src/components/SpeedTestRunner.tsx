@@ -66,9 +66,7 @@ export function SpeedTestRunner() {
           : typeof navigator !== "undefined"
             ? navigator.connection?.effectiveType || null
             : null;
-        if (connectionTypeValue) {
-          setConnectionType(connectionTypeValue);
-        }
+        setConnectionType(connectionTypeValue);
 
         useSpeedTestStore.getState().setStatus("selectingServer");
         setSelectedServer({
@@ -78,6 +76,7 @@ export function SpeedTestRunner() {
         });
 
         const detectedISPPromise = ispService.detectISP();
+        const detectedDeviceLocationPromise = ispService.detectDeviceLocation();
 
         useSpeedTestStore.getState().setStatus("ping");
 
@@ -91,7 +90,10 @@ export function SpeedTestRunner() {
           }
         );
 
-        const detectedISP = await detectedISPPromise;
+        const [detectedISP, detectedDeviceLocation] = await Promise.all([
+          detectedISPPromise,
+          detectedDeviceLocationPromise,
+        ]);
         if (detectedISP) {
           setISP(detectedISP);
         }
@@ -135,12 +137,12 @@ export function SpeedTestRunner() {
             province: detectedISP?.region ?? null,
             district: null,
             city: detectedISP?.city ?? null,
-            latitude: detectedISP?.latitude ?? null,
-            longitude: detectedISP?.longitude ?? null,
+            latitude: detectedDeviceLocation?.latitude ?? detectedISP?.latitude ?? null,
+            longitude: detectedDeviceLocation?.longitude ?? detectedISP?.longitude ?? null,
             browser: userAgent || null,
             operatingSystem,
             deviceType,
-            networkType: connectionType || null,
+            networkType: connectionTypeValue || null,
             server: completedResult.server?.name ?? null,
             timestamp: new Date().toISOString(),
           };
