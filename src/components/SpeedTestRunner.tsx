@@ -8,7 +8,6 @@ import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 import { speedService } from "@/services/speed.service";
 import { ispService } from "@/services/isp.service";
 import { useSubmitAnalyticsTest } from "@/services/api";
-import { getRetryMessage, shouldRetryMeasurement } from "@/services/speed-test-retry";
 
 export function SpeedTestRunner() {
   const router = useRouter();
@@ -24,7 +23,6 @@ export function SpeedTestRunner() {
     completeTest,
     resetTest,
     resetRetryCount,
-    incrementRetryCount,
     setError,
     setISP,
     setConnectionType,
@@ -49,128 +47,107 @@ export function SpeedTestRunner() {
     startTest();
 
     try {
-      let attempt = 0;
-      while (attempt < 2) {
-        if (attempt > 0) {
-          useSpeedTestStore.getState().setStatus("retrying");
-          useSpeedTestStore.getState().setProgress(0);
-          incrementRetryCount();
-        }
+      useSpeedTestStore.getState().setStatus("detectingNetwork");
 
-        useSpeedTestStore.getState().setStatus("detectingNetwork");
-
-        const reportedConnectionType = typeof navigator !== "undefined"
-          ? navigator.connection?.type
+      const reportedConnectionType = typeof navigator !== "undefined"
+        ? navigator.connection?.type
+        : null;
+      const connectionTypeValue = reportedConnectionType &&
+        !["unknown", "none", "other"].includes(reportedConnectionType.toLowerCase())
+        ? reportedConnectionType
+        : typeof navigator !== "undefined"
+          ? navigator.connection?.effectiveType || null
           : null;
-        const connectionTypeValue = reportedConnectionType &&
-          !["unknown", "none", "other"].includes(reportedConnectionType.toLowerCase())
-          ? reportedConnectionType
-          : typeof navigator !== "undefined"
-            ? navigator.connection?.effectiveType || null
-            : null;
-        setConnectionType(connectionTypeValue);
+      setConnectionType(connectionTypeValue);
 
-        useSpeedTestStore.getState().setStatus("selectingServer");
-        setSelectedServer({
-          name: "Auto",
-          host: "",
-          location: "Auto-detected",
-        });
+      useSpeedTestStore.getState().setStatus("selectingServer");
+      setSelectedServer({
+        name: "Auto",
+        host: "",
+        location: "Auto-detected",
+      });
 
-        const detectedISPPromise = ispService.detectISP();
-        const detectedDeviceLocationPromise = ispService.detectDeviceLocation();
+      const detectedISPPromise = ispService.detectISP();
+      const detectedDeviceLocationPromise = ispService.detectDeviceLocation();
 
-        useSpeedTestStore.getState().setStatus("ping");
+      useSpeedTestStore.getState().setStatus("ping");
 
-        const testResult = await speedService.runTest(
-          (phase, prog, data) => {
-            useSpeedTestStore.getState().setStatus(phase);
-            useSpeedTestStore.getState().setProgress(prog);
-            if (data) {
-              useSpeedTestStore.getState().setCurrentPhaseSpeed(data.instantaneousSpeed);
-            }
+      const testResult = await speedService.runTest(
+        (phase, prog, data) => {
+          useSpeedTestStore.getState().setStatus(phase);
+          useSpeedTestStore.getState().setProgress(prog);
+          if (data) {
+            useSpeedTestStore.getState().setCurrentPhaseSpeed(data.instantaneousSpeed);
           }
-        );
-
-        const [detectedISP, detectedDeviceLocation] = await Promise.all([
-          detectedISPPromise,
-          detectedDeviceLocationPromise,
-        ]);
-        if (detectedISP) {
-          setISP(detectedISP);
         }
+      );
 
-        if (!shouldRetryMeasurement(testResult, attempt)) {
-          useSpeedTestStore.getState().setStatus("calculatingQuality");
-
-          const completedResult = testResult;
-
-          completeTest(completedResult);
-          router.push(`/result/${encodeURIComponent(completedResult.testId)}`);
-
-          const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
-          const deviceType = /ipad|tablet/i.test(userAgent) || (/android/i.test(userAgent) && !/mobile/i.test(userAgent))
-            ? "Tablet"
-            : /mobile|iphone|ipod|android/i.test(userAgent)
-              ? "Mobile"
-              : userAgent
-                ? "Desktop"
-                : null;
-          const operatingSystem = /windows/i.test(userAgent)
-            ? "Windows"
-            : /android/i.test(userAgent)
-              ? "Android"
-              : /iphone|ipad|ipod/i.test(userAgent)
-                ? "iOS"
-                : /mac os/i.test(userAgent)
-                  ? "macOS"
-                  : /linux/i.test(userAgent)
-                    ? "Linux"
-                    : null;
-
-          const payload = {
-            download: completedResult.downloadMbps,
-            upload: completedResult.uploadMbps,
-            ping: completedResult.latency,
-            jitter: completedResult.jitter,
-            packetLoss: null,
-            isp: detectedISP?.isp?.trim() || detectedISP?.org?.trim() || null,
-            asn: detectedISP?.connection?.asn || null,
-            country: detectedISP?.country ?? null,
-            province: detectedISP?.region ?? null,
-            district: null,
-            city: detectedISP?.city ?? null,
-            latitude: detectedDeviceLocation?.latitude ?? detectedISP?.latitude ?? null,
-            longitude: detectedDeviceLocation?.longitude ?? detectedISP?.longitude ?? null,
-            browser: userAgent || null,
-            operatingSystem,
-            deviceType,
-            networkType: connectionTypeValue || null,
-            server: completedResult.server?.name ?? null,
-            timestamp: new Date().toISOString(),
-          };
-
-          try {
-            await submitAnalytics(payload);
-          } catch (error) {
-            console.warn("Analytics submission failed", error);
-          }
-
-          return;
-        }
-
-        attempt += 1;
-        if (attempt < 2) {
-          useSpeedTestStore.getState().setStatus("retrying");
-          useSpeedTestStore.getState().setError(getRetryMessage(attempt - 1));
-        }
+      const [detectedISP, detectedDeviceLocation] = await Promise.all([
+        detectedISPPromise,
+        detectedDeviceLocationPromise,
+      ]);
+      if (detectedISP) {
+        setISP(detectedISP);
       }
 
-      setError("Test failed. Please try again.");
+      useSpeedTestStore.getState().setStatus("calculatingQuality");
+
+      const completedResult = testResult;
+
+      completeTest(completedResult);
+      router.push(`/result/${encodeURIComponent(completedResult.testId)}`);
+
+      const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+      const deviceType = /ipad|tablet/i.test(userAgent) || (/android/i.test(userAgent) && !/mobile/i.test(userAgent))
+        ? "Tablet"
+        : /mobile|iphone|ipod|android/i.test(userAgent)
+          ? "Mobile"
+          : userAgent
+            ? "Desktop"
+            : null;
+      const operatingSystem = /windows/i.test(userAgent)
+        ? "Windows"
+        : /android/i.test(userAgent)
+          ? "Android"
+          : /iphone|ipad|ipod/i.test(userAgent)
+            ? "iOS"
+            : /mac os/i.test(userAgent)
+              ? "macOS"
+              : /linux/i.test(userAgent)
+                ? "Linux"
+                : null;
+
+      const payload = {
+        download: completedResult.downloadMbps,
+        upload: completedResult.uploadMbps,
+        ping: completedResult.latency,
+        jitter: completedResult.jitter,
+        packetLoss: null,
+        isp: detectedISP?.isp?.trim() || detectedISP?.org?.trim() || null,
+        asn: detectedISP?.connection?.asn || null,
+        country: detectedISP?.country ?? null,
+        province: detectedISP?.region ?? null,
+        district: null,
+        city: detectedISP?.city ?? null,
+        latitude: detectedDeviceLocation?.latitude ?? detectedISP?.latitude ?? null,
+        longitude: detectedDeviceLocation?.longitude ?? detectedISP?.longitude ?? null,
+        browser: userAgent || null,
+        operatingSystem,
+        deviceType,
+        networkType: connectionTypeValue || null,
+        server: completedResult.server?.name ?? null,
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        await submitAnalytics(payload);
+      } catch (error) {
+        console.warn("Analytics submission failed", error);
+      }
     } catch {
       setError("Test failed. Please try again.");
     }
-  }, [completeTest, connectionType, incrementRetryCount, router, setConnectionType, setError, setISP, setSelectedServer, startTest, submitAnalytics]);
+  }, [completeTest, router, setConnectionType, setError, setISP, setSelectedServer, startTest, submitAnalytics]);
 
   useEffect(() => {
     if (hasStartedRef.current || status !== "idle") return;
