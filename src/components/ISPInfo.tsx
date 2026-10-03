@@ -1,34 +1,19 @@
 "use client";
 
 import { GlassCard } from "@/components/ui/GlassCard";
-import { Globe, Users, TrendingUp, Award, Server, MapPin } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Globe, Activity, TrendingUp, Award, MapPin } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { ISP, ispService } from "@/services/isp.service";
 import { cn } from "@/lib/utils";
 
 export function ISPInfo() {
-  const [isps, setIsps] = useState<ISP[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadISPs = async () => {
-      try {
-        const data = await ispService.getISPList();
-        setIsps(Array.isArray(data) ? data : []);
-      } catch {
-        setIsps([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadISPs();
-  }, []);
+  const { data: isps = [], isLoading } = useQuery<ISP[]>({
+    queryKey: ["isps", "list"],
+    queryFn: () => ispService.getISPList(),
+  });
 
   const topISP = isps[0];
   const hasISPs = isps.length > 0;
-  const totalUsers = isps.reduce((sum, isp) => sum + isp.users, 0);
-
   const stats = [
     {
       label: "Top ISP",
@@ -43,15 +28,9 @@ export function ISPInfo() {
       color: "secondary",
     },
     {
-      label: "Active Users",
-      value: hasISPs ? `${totalUsers >= 1000 ? `${(totalUsers / 1000).toFixed(0)}K` : totalUsers}` : "N/A",
-      icon: Users,
-      color: "brand",
-    },
-    {
-      label: "Servers",
-      value: "12",
-      icon: Server,
+      label: "Measured Tests",
+      value: hasISPs ? isps.reduce((sum, isp) => sum + isp.users, 0).toLocaleString() : "N/A",
+      icon: Activity,
       color: "secondary",
     },
   ];
@@ -151,9 +130,10 @@ export function ISPInfo() {
                     <p className="text-xs text-text-secondary">UL</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono font-semibold text-yellow-500">
-                      ⭐ {isp.rating}
+                    <p className="text-sm font-mono font-semibold text-text-primary">
+                      {isp.avgPing} ms
                     </p>
+                    <p className="text-xs text-text-secondary">PING</p>
                   </div>
                 </div>
               </div>

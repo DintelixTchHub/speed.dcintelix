@@ -144,10 +144,10 @@ export default function CookiesPage() {
           <div className="space-y-1">
             <p>DCintelix</p>
             <p>
-              Email: <a href="mailto:info@dcintelix.rw" className="text-cyan-400 hover:underline">info@dcintelix.rw</a>
+              Email: <a href="mailto:info@speed.dcintelix.rw" className="text-cyan-400 hover:underline">info@speed.dcintelix.rw</a>
             </p>
             <p>
-              Website: <a href="http://www.dcintelix.rw/" className="text-cyan-400 hover:underline">www.dcintelix.rw</a>
+              Website: <a href="http://www.speed.dcintelix.rw/" className="text-cyan-400 hover:underline">www.speed.dcintelix.rw</a>
             </p>
           </div>
         </section>

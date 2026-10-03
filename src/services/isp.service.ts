@@ -1,3 +1,5 @@
+import { backendApiUrl } from "../lib/backend-api";
+
 export interface ISP {
   id: string;
   name: string;
@@ -36,6 +38,8 @@ export interface IPInfo {
   countryCode: string;
   city: string;
   region: string;
+  latitude: number | null;
+  longitude: number | null;
   connection: {
     asn: number;
     org: string;
@@ -44,10 +48,8 @@ export interface IPInfo {
   };
 }
 
-const API_BASE = "";
-
 async function fetchAPI(endpoint: string) {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(backendApiUrl(endpoint), {
     method: "GET",
     headers: { Accept: "application/json" },
   });
@@ -70,7 +72,7 @@ export class ISPService {
 
   async detectISP(): Promise<IPInfo | null> {
     try {
-      const response = await fetch("//ipwho.is/", {
+      const response = await fetch(backendApiUrl("/api/isps/detect"), {
         method: "GET",
         cache: "no-store",
         headers: {
@@ -95,6 +97,8 @@ export class ISPService {
         countryCode: data.country_code || "",
         city: data.city || "",
         region: data.region || "",
+        latitude: typeof data.latitude === "number" ? data.latitude : null,
+        longitude: typeof data.longitude === "number" ? data.longitude : null,
         connection: {
           asn: data.connection?.asn || 0,
           org: data.connection?.org || "",

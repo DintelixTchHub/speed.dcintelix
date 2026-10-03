@@ -82,7 +82,7 @@ export function Footer() {
               </h4>
               <ul className="space-y-2 text-base text-text-secondary">
                 <li>DCintelix</li>
-                <li>www.dcintelix.rw</li>
+                <li>www.speed.dcintelix.rw</li>
               </ul>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
+import type { IPInfo } from "@/services/isp.service";
 import { Wifi, Upload, Timer, Activity, Globe } from "lucide-react";
 
 interface SpeedResult {
@@ -13,22 +14,6 @@ interface SpeedResult {
   latency: number;
   downloadMbps: number;
   uploadMbps: number;
-}
-
-interface IPInfo {
-  ip: string;
-  isp: string;
-  org: string;
-  country: string;
-  countryCode: string;
-  city: string;
-  region: string;
-  connection: {
-    asn: number;
-    org: string;
-    isp: string;
-    domain: string;
-  };
 }
 
 interface ServerInfo {
@@ -101,6 +86,14 @@ export function SpeedTestResults({
   selectedServer,
   className,
 }: SpeedTestResultsProps) {
+  const networkName = [
+    isp?.isp,
+    isp?.connection?.isp,
+    isp?.org,
+    isp?.connection?.org,
+    isp?.connection?.domain,
+  ].find((name) => name?.trim())?.trim() || "Not detected";
+
   return (
     <div className={cn("w-full max-w-3xl mx-auto space-y-4", className)}>
       <div className="grid grid-cols-2 gap-3">
@@ -120,7 +113,7 @@ export function SpeedTestResults({
           <div className="space-y-1">
             <InfoRow label="Server" value={selectedServer?.name || result.server.name} />
             <InfoRow label="Server Location" value={selectedServer?.location || result.server.location} />
-            <InfoRow label="ISP" value={isp?.isp || isp?.org} />
+            <InfoRow label="Network Name" value={networkName} />
             <InfoRow label="Country" value={isp?.country} />
             <InfoRow label="City" value={isp?.city} />
             <InfoRow label="Connection" value={connectionType} />
@@ -136,7 +129,6 @@ export function SpeedTestResults({
           </div>
           <div className="mt-3 space-y-1">
             <InfoRow label="Test ID" value={result.testId} />
-            <InfoRow label="IP Address" value={isp?.ip} />
             <InfoRow label="ASN" value={isp?.connection?.asn ? `AS${isp.connection.asn}` : null} />
             <InfoRow label="ISP Org" value={isp?.connection?.org} />
             <InfoRow label="Domain" value={isp?.connection?.domain} />

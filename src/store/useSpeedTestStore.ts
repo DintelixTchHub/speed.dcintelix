@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { IPInfo } from "@/services/isp.service";
 
 export type TestStatus = "idle" | "initializing" | "detectingNetwork" | "selectingServer" | "ping" | "downloading" | "uploading" | "calculatingQuality" | "complete" | "error" | "retrying";
 
@@ -9,24 +10,9 @@ export interface SpeedResult {
     location: string;
   };
   latency: number;
+  jitter: number;
   downloadMbps: number;
   uploadMbps: number;
-}
-
-export interface IPInfo {
-  ip: string;
-  isp: string;
-  org: string;
-  country: string;
-  countryCode: string;
-  city: string;
-  region: string;
-  connection: {
-    asn: number;
-    org: string;
-    isp: string;
-    domain: string;
-  };
 }
 
 export interface ServerInfo {

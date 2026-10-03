@@ -1,5 +1,6 @@
 import { SpeedResult } from "@/store/useSpeedTestStore";
 import { calculateDownloadMbps, summarizeDownloadSpeeds } from "./download-speed";
+import { backendApiUrl } from "../lib/backend-api";
 
 export interface SpeedTestConfig {
   duration: number;
@@ -20,9 +21,11 @@ const DEFAULT_CONFIG: SpeedTestConfig = {
     host: "",
     location: process.env.NEXT_PUBLIC_SPEEDTEST_SERVER_LOCATION || "Kigali, Rwanda",
   },
-  downloadTestUrl: process.env.NEXT_PUBLIC_DOWNLOAD_TEST_URL || "/api/speedtest/download",
-  uploadTestUrl: process.env.NEXT_PUBLIC_UPLOAD_TEST_URL || "/api/speedtest/upload",
-  pingTestUrl: "/api/speedtest/ping",
+  downloadTestUrl:
+    process.env.NEXT_PUBLIC_DOWNLOAD_TEST_URL || backendApiUrl("/api/speedtest/download"),
+  uploadTestUrl:
+    process.env.NEXT_PUBLIC_UPLOAD_TEST_URL || backendApiUrl("/api/speedtest/upload"),
+  pingTestUrl: backendApiUrl("/api/speedtest/ping"),
 };
 
 export interface SpeedProgress {
@@ -100,6 +103,7 @@ export class SpeedService {
         testId: crypto.randomUUID(),
         server: this.config.server,
         latency: ping,
+        jitter,
         downloadMbps: downloadSpeed,
         uploadMbps: uploadSpeed,
       };
@@ -124,11 +128,12 @@ export class SpeedService {
     for (let i = 0; i < count; i++) {
       const start = performance.now();
       try {
-        await fetch(`${this.config.pingTestUrl}?t=${Date.now()}_${i}`, {
+        const response = await fetch(`${this.config.pingTestUrl}?t=${Date.now()}_${i}`, {
           method: "GET",
           cache: "no-store",
           signal,
         });
+        if (!response.ok) continue;
         const end = performance.now();
         samples.push(end - start);
       } catch {
@@ -137,19 +142,17 @@ export class SpeedService {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
     }
 
-    const pingValues = samples.length ? samples : [0];
+    if (samples.length === 0) {
+      throw new Error("Latency measurement failed");
+    }
+
+    const pingValues = samples;
     const ping = Math.round(pingValues.reduce((a, b) => a + b, 0) / pingValues.length);
-    const jitter =
-      pingValues.length > 1
-        ? Math.round(
-            pingValues
-              .slice(1)
-              .map((v) => Math.abs(v - pingValues[pingValues.length - 2]))
-              .reduce((a, b) => a + b, 0) /
-              (pingValues.length - 1) *
-              10
-          ) / 10
-        : 0;
+    const jitter = pingValues.length > 1
+      ? Number((pingValues.slice(1)
+          .reduce((sum, value, index) => sum + Math.abs(value - pingValues[index]), 0) /
+          (pingValues.length - 1)).toFixed(1))
+      : 0;
 
     return { ping, jitter };
   }
@@ -180,22 +183,17 @@ export class SpeedService {
         xhr.setRequestHeader("Pragma", "no-cache");
         xhr.responseType = "arraybuffer";
 
-        if (signal) {
-          const abort = () => {
-            xhr.abort();
-          };
-          signal.addEventListener("abort", abort, { once: true });
-          (xhr as XMLHttpRequest & { _abort: () => void })._abort = abort;
-        }
-
         let loadedBytes = 0;
         let settled = false;
         let maxProgress = 0;
+        let abortHandler: (() => void) | undefined;
 
-        const finishWithResult = (value: number, finalProgress = 100) => {
+        const finishWithResult = (value: number, finalProgress = 100, abortRequest = false) => {
           if (settled) return;
           settled = true;
           onProgress?.(finalProgress, value, value);
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
+          if (abortRequest && xhr.readyState !== XMLHttpRequest.DONE) xhr.abort();
           resolve(value);
         };
 
@@ -236,15 +234,14 @@ export class SpeedService {
             const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0) || 0;
             const finalMbps = calculateDownloadMbps(finalLoaded, totalElapsedMs || 250);
             const rounded = Math.round(finalMbps * 10) / 10;
-            finishWithResult(rounded, Math.min(100, maxProgress + 5));
+            finishWithResult(rounded, Math.min(100, maxProgress + 5), true);
           }
         };
 
         xhr.onprogress = tick;
 
         xhr.onload = () => {
-          const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
-          typedXhr._abort?.();
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
           const totalSec = (performance.now() - startTime) / 1000;
           const finalLoaded = loadedBytes || (xhr.response?.byteLength || 0) || 0;
           const finalMbps = totalSec > 0 && finalLoaded > 0 ? calculateDownloadMbps(finalLoaded, totalSec * 1000) : 0;
@@ -253,36 +250,41 @@ export class SpeedService {
           if (rounded > 0) {
             finishWithResult(rounded, 100);
           } else {
-            const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
-            finishWithResult(Math.round(fallback * 10) / 10, 100);
+            reject(new Error("Download returned no measurable data"));
           }
         };
 
         xhr.onerror = () => {
-          const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
-          typedXhr._abort?.();
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
           reject(new Error("Download failed"));
         };
 
         xhr.onabort = () => {
-          const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
-          typedXhr._abort?.();
+          if (settled) return;
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
           reject(new DOMException("Aborted", "AbortError"));
         };
 
         xhr.timeout = 15000;
         xhr.ontimeout = () => {
-          const typedXhr = xhr as XMLHttpRequest & { _abort?: () => void };
-          typedXhr._abort?.();
-          const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
-          finishWithResult(Math.round(fallback * 10) / 10, 100);
+          const elapsed = performance.now() - startTime;
+          if (loadedBytes > 0 && elapsed > 0) {
+            finishWithResult(Math.round(calculateDownloadMbps(loadedBytes, elapsed) * 10) / 10, 100);
+          } else {
+            reject(new Error("Download timed out before data was received"));
+          }
         };
+
+        if (signal) {
+          abortHandler = () => xhr.abort();
+          signal.addEventListener("abort", abortHandler, { once: true });
+        }
 
         xhr.send();
       });
     } catch (error) {
       if ((error as Error).name === "AbortError") throw error;
-      return 0;
+      throw error;
     }
   }
 
@@ -304,7 +306,7 @@ export class SpeedService {
     const minDurationMs = 2200;
 
     try {
-      await new Promise<void>((resolve, reject) => {
+      return await new Promise<number>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", uploadUrl, true);
         xhr.setRequestHeader("Content-Type", "application/octet-stream");
@@ -320,12 +322,15 @@ export class SpeedService {
         const smoothingFactor = 0.35;
         let settled = false;
         let maxProgress = 0;
+        let uploadCompletedAt: number | null = null;
+        let abortHandler: (() => void) | undefined;
 
         const finishWithResult = (value: number, finalProgress = 100) => {
           if (settled) return;
           settled = true;
           onProgress?.(finalProgress, value, value);
-          resolve();
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
+          resolve(value);
         };
 
         xhr.upload.onprogress = (event) => {
@@ -336,6 +341,7 @@ export class SpeedService {
 
           uploadedBytes = event.loaded || payload.byteLength;
           const now = performance.now();
+          if (uploadedBytes >= payload.byteLength) uploadCompletedAt = now;
           const elapsed = now - lastTime;
           const totalElapsedMs = now - startTime;
           const totalBytes = event.total || payload.byteLength;
@@ -367,57 +373,54 @@ export class SpeedService {
 
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            const totalTimeSec = (performance.now() - startTime) / 1000;
-            const finalMbps = totalTimeSec > 0 ? calculateDownloadMbps(dataSize, totalTimeSec * 1000) : 0;
+            const totalTimeMs = (uploadCompletedAt ?? performance.now()) - startTime;
+            const finalMbps = uploadedBytes > 0 && totalTimeMs > 0
+              ? calculateDownloadMbps(uploadedBytes, totalTimeMs)
+              : 0;
             const rounded = Math.round(finalMbps * 10) / 10;
             if (rounded > 0) {
               finishWithResult(rounded, 100);
             } else {
-              const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
-              finishWithResult(Math.round(fallback * 10) / 10, 100);
+              reject(new Error("Upload returned no measurable data"));
             }
           } else {
             reject(new Error("Upload failed"));
           }
         };
 
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.onabort = () => reject(new DOMException("Aborted", "AbortError"));
+        xhr.onerror = () => {
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
+          reject(new Error("Upload failed"));
+        };
+        xhr.onabort = () => {
+          if (settled) return;
+          if (signal && abortHandler) signal.removeEventListener("abort", abortHandler);
+          reject(new DOMException("Aborted", "AbortError"));
+        };
 
         xhr.timeout = 15000;
         xhr.ontimeout = () => {
-          const fallback = speeds.length ? summarizeDownloadSpeeds(speeds, 0) : 0;
-          finishWithResult(Math.round(fallback * 10) / 10, 100);
+          const elapsed = (uploadCompletedAt ?? performance.now()) - startTime;
+          if (uploadedBytes > 0 && elapsed > 0) {
+            finishWithResult(Math.round(calculateDownloadMbps(uploadedBytes, elapsed) * 10) / 10, 100);
+          } else {
+            reject(new Error("Upload timed out before data was sent"));
+          }
         };
 
         if (signal) {
-          const abortHandler = () => {
-            xhr.abort();
-          };
-          signal.addEventListener("abort", abortHandler);
+          abortHandler = () => xhr.abort();
+          signal.addEventListener("abort", abortHandler, { once: true });
         }
 
         xhr.send(payload);
       });
 
-      const totalTimeSec = (performance.now() - startTime) / 1000;
-      if (totalTimeSec > 0) {
-        const bitsPerSecond = (dataSize * 8) / totalTimeSec;
-        const mbps = bitsPerSecond / (1024 * 1024);
-        return Math.round(mbps * 10) / 10;
-      }
-
-      return 0;
     } catch (error) {
       if ((error as Error).name === "AbortError") throw error;
       onProgress?.(100, 0, 0);
-      return 0;
+      throw error;
     }
-  }
-
-  private bytesDeltaToMbps(bytesDelta: number, elapsedMs: number): number {
-    const bitsPerSecond = (bytesDelta * 8) / (elapsedMs / 1000);
-    return Math.round((bitsPerSecond / (1024 * 1024)) * 10) / 10;
   }
 }
 

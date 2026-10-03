@@ -1,3 +1,5 @@
+import { backendApiUrl } from "../lib/backend-api";
+
 export interface AnalyticsData {
   dailyTests: { date: string; count: number }[];
   speedDistribution: { range: string; count: number }[];
@@ -6,10 +8,8 @@ export interface AnalyticsData {
   monthlyGrowth: { month: string; tests: number; users: number }[];
 }
 
-const API_BASE = "";
-
 async function fetchAPI<T>(endpoint: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(backendApiUrl(endpoint), {
     method: "GET",
     headers: { Accept: "application/json" },
     ...init,
@@ -84,12 +84,21 @@ export class AnalyticsService {
   }
 
   async submitTest(payload: Record<string, unknown>) {
+    const submittedPayload = Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => {
+        if (value === null || value === undefined) return false;
+        if (typeof value !== "string") return true;
+        const normalized = value.trim().toLowerCase();
+        return normalized !== "" && normalized !== "unknown";
+      })
+    );
+
     return fetchAPI(`/api/analytics/submit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(submittedPayload),
     });
   }
 }

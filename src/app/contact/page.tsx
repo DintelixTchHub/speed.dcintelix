@@ -49,14 +49,14 @@ export default function ContactPage() {
             <p><span className="font-medium text-white">Product:</span> DCintelix Speed Test</p>
             <p>
               <span className="font-medium text-white">Website:</span>{" "}
-              <a href="http://www.dcintelix.rw/" className="text-cyan-400 hover:underline">
-                www.dcintelix.rw
+              <a href="http://www.speed.dcintelix.rw/" className="text-cyan-400 hover:underline">
+                www.speed.dcintelix.rw
               </a>
             </p>
             <p>
               <span className="font-medium text-white">Email:</span>{" "}
-              <a href="mailto:info@dcintelix.rw" className="text-cyan-400 hover:underline">
-                info@dcintelix.rw
+              <a href="mailto:info@speed.dcintelix.rw" className="text-cyan-400 hover:underline">
+                info@speed.dcintelix.rw
               </a>
             </p>
           </div>

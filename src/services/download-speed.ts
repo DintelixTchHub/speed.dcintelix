@@ -2,7 +2,7 @@ export function calculateDownloadMbps(bytes: number, elapsedMs: number): number 
   if (!bytes || !elapsedMs) return 0;
 
   const bitsPerSecond = (bytes * 8) / (elapsedMs / 1000);
-  return Math.round((bitsPerSecond / (1024 * 1024)) * 10) / 10;
+  return Math.round((bitsPerSecond / 1_000_000) * 10) / 10;
 }
 
 export function summarizeDownloadSpeeds(samples: number[], fallback: number): number {

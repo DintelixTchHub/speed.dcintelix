@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   authors: [{ name: "DCintelix" }],
   creator: "DCintelix",
   publisher: "DCintelix",
-  metadataBase: new URL("https://speed.dcintelix.rw"),
+  metadataBase: new URL("https://dcintelix.rw"),
   alternates: {
     canonical: "/",
   },
@@ -118,7 +118,7 @@ export default function RootLayout({
     publisher: {
       "@type": "Organization",
       name: "DCintelix",
-      url: "https://www.dcintelix.rw",
+      url: "https://www.speed.dcintelix.rw",
     },
     potentialAction: {
       "@type": "HowTo",

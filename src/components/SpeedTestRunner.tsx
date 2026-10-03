@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { MinimalGauge } from "@/components/MinimalGauge";
 import { SpeedTestResults } from "@/components/SpeedTestResults";
 import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 import { speedService } from "@/services/speed.service";
 import { ispService } from "@/services/isp.service";
-import { analyticsService } from "@/services/analytics.service";
+import { useSubmitAnalyticsTest } from "@/services/api";
 import { getRetryMessage, shouldRetryMeasurement } from "@/services/speed-test-retry";
 
 export function SpeedTestRunner() {
+  const { mutateAsync: submitAnalytics } = useSubmitAnalyticsTest();
   const {
     status,
     currentPhaseSpeed,
     result,
-    error,
     isp,
     connectionType,
     selectedServer,
@@ -38,29 +38,7 @@ export function SpeedTestRunner() {
       ? result.downloadMbps
       : 0;
 
-  const [isOnline, setIsOnline] = useState(!!navigator?.onLine);
-
-  useEffect(() => {
-    if (typeof navigator === "undefined") return;
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    setIsOnline(navigator.onLine);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (hasStartedRef.current) return;
-    if (status !== "idle") return;
-    hasStartedRef.current = true;
-    runAutoTest();
-  }, []);
-
-  const runAutoTest = async () => {
+  const runAutoTest = useCallback(async () => {
     if (!navigator?.onLine) {
       setError("No network connection detected. Please check your internet connection.");
       return;
@@ -79,10 +57,15 @@ export function SpeedTestRunner() {
 
         useSpeedTestStore.getState().setStatus("detectingNetwork");
 
-        const connectionTypeValue =
-          (typeof navigator !== "undefined" && navigator.connection?.type) ||
-          (typeof navigator !== "undefined" && navigator.connection?.effectiveType) ||
-          null;
+        const reportedConnectionType = typeof navigator !== "undefined"
+          ? navigator.connection?.type
+          : null;
+        const connectionTypeValue = reportedConnectionType &&
+          !["unknown", "none", "other"].includes(reportedConnectionType.toLowerCase())
+          ? reportedConnectionType
+          : typeof navigator !== "undefined"
+            ? navigator.connection?.effectiveType || null
+            : null;
         if (connectionTypeValue) {
           setConnectionType(connectionTypeValue);
         }
@@ -120,31 +103,50 @@ export function SpeedTestRunner() {
 
           completeTest(completedResult);
 
+          const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+          const deviceType = /ipad|tablet/i.test(userAgent) || (/android/i.test(userAgent) && !/mobile/i.test(userAgent))
+            ? "Tablet"
+            : /mobile|iphone|ipod|android/i.test(userAgent)
+              ? "Mobile"
+              : userAgent
+                ? "Desktop"
+                : null;
+          const operatingSystem = /windows/i.test(userAgent)
+            ? "Windows"
+            : /android/i.test(userAgent)
+              ? "Android"
+              : /iphone|ipad|ipod/i.test(userAgent)
+                ? "iOS"
+                : /mac os/i.test(userAgent)
+                  ? "macOS"
+                  : /linux/i.test(userAgent)
+                    ? "Linux"
+                    : null;
+
           const payload = {
             download: completedResult.downloadMbps,
             upload: completedResult.uploadMbps,
             ping: completedResult.latency,
-            jitter: 0,
+            jitter: completedResult.jitter,
             packetLoss: null,
-            isp: isp?.isp ?? null,
-            asn: isp?.connection?.asn ?? null,
-            country: isp?.country ?? null,
-            province: isp?.region ?? null,
+            isp: detectedISP?.isp?.trim() || detectedISP?.org?.trim() || null,
+            asn: detectedISP?.connection?.asn || null,
+            country: detectedISP?.country ?? null,
+            province: detectedISP?.region ?? null,
             district: null,
-            city: isp?.city ?? null,
-            latitude: null,
-            longitude: null,
-            browser: typeof navigator !== "undefined" ? navigator.userAgent : null,
-            operatingSystem: typeof navigator !== "undefined" ? navigator.platform : null,
-            deviceType: typeof navigator !== "undefined" ? (/(tablet|ipad|android)/i.test(navigator.userAgent) ? "Tablet" : /(mobile|iphone|android)/i.test(navigator.userAgent) ? "Mobile" : "Desktop") : null,
+            city: detectedISP?.city ?? null,
+            latitude: detectedISP?.latitude ?? null,
+            longitude: detectedISP?.longitude ?? null,
+            browser: userAgent || null,
+            operatingSystem,
+            deviceType,
             networkType: connectionType || null,
             server: completedResult.server?.name ?? null,
-            ipAddress: isp?.ip ?? null,
             timestamp: new Date().toISOString(),
           };
 
           try {
-            await analyticsService.submitTest(payload);
+            await submitAnalytics(payload);
           } catch (error) {
             console.warn("Analytics submission failed", error);
           }
@@ -163,7 +165,13 @@ export function SpeedTestRunner() {
     } catch {
       setError("Test failed. Please try again.");
     }
-  };
+  }, [completeTest, connectionType, incrementRetryCount, setConnectionType, setError, setISP, setSelectedServer, startTest, submitAnalytics]);
+
+  useEffect(() => {
+    if (hasStartedRef.current || status !== "idle") return;
+    hasStartedRef.current = true;
+    runAutoTest();
+  }, [runAutoTest, status]);
 
   const handleReset = () => {
     hasStartedRef.current = false;

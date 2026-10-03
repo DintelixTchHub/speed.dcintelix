@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Globe2, TimerReset, Wifi } from "lucide-react";
+import { Activity, TimerReset, Wifi } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { analyticsService } from "@/services/analytics.service";
 
@@ -11,7 +11,6 @@ type OverviewData = {
   averageUpload: number;
   averagePing: number;
   averageJitter: number;
-  averagePacketLoss: number;
 };
 
 type ISPEntry = {
@@ -47,7 +46,7 @@ export function AnalyticsDashboard() {
     refetchInterval: 30000,
   });
 
-  const { data: rwandaIspRanks } = useQuery<Array<RwandaISPEntry>>({
+  const { data: rwandaIspRanks = [], isLoading: isRwandaRankingsLoading } = useQuery<Array<RwandaISPEntry>>({
     queryKey: ["analytics", "rwandaIspRankings"],
     queryFn: (): Promise<Array<RwandaISPEntry>> => analyticsService.getRwandaIspRankings("30d"),
     refetchInterval: 30000,
@@ -57,7 +56,7 @@ export function AnalyticsDashboard() {
     { label: "Total Tests", value: overview?.totalTests ?? 0, icon: Activity },
     { label: "Avg Download", value: `${overview?.averageDownload ?? 0} Mbps`, icon: Wifi },
     { label: "Avg Ping", value: `${overview?.averagePing ?? 0} ms`, icon: TimerReset },
-    { label: "Packet Loss", value: `${overview?.averagePacketLoss ?? 0}%`, icon: Globe2 },
+    { label: "Avg Jitter", value: `${overview?.averageJitter ?? 0} ms`, icon: Activity },
   ];
 
   return (
@@ -107,11 +106,11 @@ export function AnalyticsDashboard() {
         <GlassCard className="p-5">
           <h3 className="mb-4 text-lg font-semibold text-text-primary">Rwanda ISP Rankings</h3>
           <div className="space-y-2">
-            {(rwandaIspRanks ?? []).slice(0, 5).map((entry) => (
+            {rwandaIspRanks.slice(0, 5).map((entry) => (
               <div key={entry.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                 <div>
                   <p className="font-semibold text-text-primary text-sm">#{entry.rank} {entry.name}</p>
-                  <p className="text-xs text-text-secondary">{entry.tests} tests · {entry.averagePing} ms ping</p>
+                  <p className="text-xs text-text-secondary">{entry.tests} measured tests · {entry.averagePing} ms ping</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-brand">{entry.averageDownload} Mbps</p>
@@ -119,6 +118,9 @@ export function AnalyticsDashboard() {
                 </div>
               </div>
             ))}
+            {!isRwandaRankingsLoading && rwandaIspRanks.length === 0 && (
+              <p className="py-4 text-sm text-text-secondary">No measured Rwanda ISP results yet.</p>
+            )}
           </div>
         </GlassCard>
       </div>

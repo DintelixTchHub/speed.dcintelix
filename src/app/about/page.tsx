@@ -84,8 +84,8 @@ export default function AboutPage() {
           </p>
           <p>
             For more information about DCintelix, visit:{" "}
-            <a href="http://www.dcintelix.rw/" className="text-cyan-400 hover:underline">
-              www.dcintelix.rw
+            <a href="http://www.speed.dcintelix.rw/" className="text-cyan-400 hover:underline">
+              www.speed.dcintelix.rw
             </a>
           </p>
         </section>

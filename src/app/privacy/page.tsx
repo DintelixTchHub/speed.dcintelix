@@ -46,15 +46,13 @@ export default function PrivacyPage() {
         <section className="space-y-4 text-sm leading-7 text-gray-300">
           <h2 className="text-xl font-semibold text-white">Information We Collect</h2>
           <p>
-            When you use our platform, we may collect anonymous technical information, including:
+            When a speed test completes, its results are automatically sent to our backend for storage and aggregated analysis. This can include:
           </p>
           <ul className="list-disc space-y-2 pl-6">
             <li>Internet connection speed results</li>
-            <li>Download and upload speed measurements</li>
-            <li>Latency and network performance information</li>
-            <li>Internet service provider information</li>
-            <li>Browser and device information</li>
-            <li>General location information such as country or region</li>
+            <li>Download and upload speed, latency, jitter, and packet-loss measurements</li>
+            <li>Internet service provider, ASN, and general location such as country, region, and city</li>
+            <li>Browser, operating system, device category, and detected network type</li>
           </ul>
           <p>We do not require users to create accounts to perform speed tests.</p>
         </section>
@@ -75,10 +73,10 @@ export default function PrivacyPage() {
         <section className="space-y-4 text-sm leading-7 text-gray-300">
           <h2 className="text-xl font-semibold text-white">Anonymous Data</h2>
           <p>
-            DCintelix Speed Test is designed to collect performance information without requiring personally identifiable information.
+            The backend uses the connecting IP address to look up ISP and coarse location information through ipwho.is. That provider receives the IP address used for the lookup and handles it under its own privacy policy. We do not send the raw IP address from the browser in the result payload or store it in our speed-test records.
           </p>
           <p>
-            We do not intentionally collect sensitive personal information through speed tests.
+            To estimate unique users in aggregate analytics, the backend may store a keyed HMAC fingerprint of the IP address rather than the raw address. This fingerprint is pseudonymous, not guaranteed anonymous, and is not returned to the frontend. Location coordinates, when available, are rounded before storage. ISP lookup may fail without preventing a speed test from completing.
           </p>
         </section>
 
@@ -116,7 +114,7 @@ export default function PrivacyPage() {
             <li>Performance monitoring</li>
           </ul>
           <p>
-            These providers may process information according to their own privacy policies.
+            The ISP and coarse-location lookup uses ipwho.is. Hosting, analytics, and advertising providers may also process information according to their own privacy policies.
           </p>
         </section>
 
@@ -132,10 +130,10 @@ export default function PrivacyPage() {
           <div className="space-y-1">
             <p>DCintelix</p>
             <p>
-              Email: <a href="mailto:info@dcintelix.rw" className="text-cyan-400 hover:underline">info@dcintelix.rw</a>
+              Email: <a href="mailto:info@speed.dcintelix.rw" className="text-cyan-400 hover:underline">info@speed.dcintelix.rw</a>
             </p>
             <p>
-              Website: <a href="http://www.dcintelix.rw" className="text-cyan-400 hover:underline">www.dcintelix.rw</a>
+              Website: <a href="http://www.speed.dcintelix.rw" className="text-cyan-400 hover:underline">www.speed.dcintelix.rw</a>
             </p>
           </div>
         </section>

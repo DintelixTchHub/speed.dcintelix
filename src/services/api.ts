@@ -1,37 +1,34 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { backendApiBaseUrl } from "../lib/backend-api";
+import { analyticsService } from "./analytics.service";
+import { speedService } from "./speed.service";
 
 export const api = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "",
+  baseUrl: backendApiBaseUrl,
 };
 
 export function useRunSpeedTest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const baseUrl = api.baseUrl || "";
-      const response = await fetch(`${baseUrl}/api/speedtest/run`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Speed test failed");
-      }
-
-      const data = await response.json();
-      return {
-        testId: data.testId,
-        server: data.server,
-        latency: data.latency,
-        downloadMbps: data.downloadMbps,
-        uploadMbps: data.uploadMbps,
-      };
-    },
+    mutationFn: () => speedService.runTest(() => undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["speedTest"] });
+    },
+  });
+}
+
+export function useSubmitAnalyticsTest() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      analyticsService.submitTest(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["analytics"] }),
+        queryClient.invalidateQueries({ queryKey: ["isps"] }),
+      ]);
     },
   });
 }
