@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react";
 import { MinimalGauge } from "@/components/MinimalGauge";
 import { SpeedTestResults } from "@/components/SpeedTestResults";
+import { AdvancedDetails } from "@/components/AdvancedDetails";
 import { useSpeedTestStore } from "@/store/useSpeedTestStore";
 import { speedService } from "@/services/speed.service";
 import { ispService } from "@/services/isp.service";
@@ -19,6 +21,7 @@ export function SpeedTestRunner() {
     isp,
     connectionType,
     selectedServer,
+    advancedDetailsExpanded,
     startTest,
     completeTest,
     resetTest,
@@ -27,6 +30,7 @@ export function SpeedTestRunner() {
     setISP,
     setConnectionType,
     setSelectedServer,
+    setAdvancedDetailsExpanded,
   } = useSpeedTestStore();
 
   const isRunning = ["initializing", "detectingNetwork", "selectingServer", "ping", "downloading", "uploading", "calculatingQuality", "retrying"].includes(status);
@@ -155,10 +159,20 @@ export function SpeedTestRunner() {
     runAutoTest();
   }, [runAutoTest, status]);
 
-  const handleReset = () => {
-    hasStartedRef.current = false;
-    resetRetryCount();
-    resetTest();
+  const handleToggleAdvancedDetails = () => {
+    const nextExpanded = !advancedDetailsExpanded;
+    setAdvancedDetailsExpanded(nextExpanded);
+    if (nextExpanded) {
+      document.getElementById("advanced-details")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  const handleRetest = () => {
+    hasStartedRef.current = true;
+    useSpeedTestStore.getState().resetTest();
     runAutoTest();
   };
 
@@ -172,17 +186,36 @@ export function SpeedTestRunner() {
           label="Download"
           isRunning={isRunning}
           status={status}
-          onClick={status === "complete" && !isRunning ? handleReset : undefined}
+          onClick={status === "complete" ? handleRetest : undefined}
         />
       </div>
       {status === "complete" && result && (
-        <SpeedTestResults
-          result={result}
-          isp={isp}
-          connectionType={connectionType}
-          selectedServer={selectedServer}
-          className="mt-6"
-        />
+        <div id="speed-test-results" className="w-full scroll-mt-6">
+          <SpeedTestResults
+            result={result}
+            isp={isp}
+            connectionType={connectionType}
+            selectedServer={selectedServer}
+            className="mt-6"
+          />
+        </div>
+      )}
+      {status === "complete" && result && (
+        <>
+          <button
+            type="button"
+            aria-expanded={advancedDetailsExpanded}
+            aria-controls="advanced-details"
+            onClick={handleToggleAdvancedDetails}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-brand/40 px-4 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/10"
+          >
+            <FileText className="h-4 w-4" />
+            {advancedDetailsExpanded ? "Hide advanced" : "View advanced"}
+          </button>
+          <div className="mt-4 w-full">
+            <AdvancedDetails />
+          </div>
+        </>
       )}
     </div>
   );

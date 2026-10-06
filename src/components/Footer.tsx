@@ -1,6 +1,7 @@
 "use client";
 
 import { Globe, Github } from "lucide-react";
+import Link from "next/link";
 import { AdBanner } from "@/components/ads/AdBanner";
 
 export function Footer() {
@@ -8,7 +9,7 @@ export function Footer() {
 
   const quickLinks = [
     { label: "Home", href: "/" },
-    { label: "Speed Test", href: "#speed-test" },
+    { label: "Speed Test", href: "/speed-test" },
     { label: "ISP Rankings", href: "/analytics" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
@@ -32,7 +33,8 @@ export function Footer() {
               <h3 className="text-xl font-semibold">DCintelix Speed Test</h3>
             </div>
             <p className="max-w-sm text-base text-text-secondary">
-              Measure internet performance, compare ISPs, and explore analytics for Rwanda and East Africa.
+              Measure internet performance, compare ISPs, and explore analytics
+              for Rwanda and East Africa.
             </p>
             <a
               href="https://github.com/dcintelix"
@@ -46,15 +48,18 @@ export function Footer() {
           </div>
 
           <div>
-          <h4 className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-text-secondary">
-            Quick Links
-          </h4>
-          <ul className="space-y-2 text-base text-text-secondary">
+            <h4 className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-text-secondary">
+              Quick Links
+            </h4>
+            <ul className="space-y-2 text-base text-text-secondary">
               {quickLinks.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="transition-colors hover:text-brand">
+                  <Link
+                    href={link.href}
+                    className="transition-colors hover:text-brand"
+                  >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -68,9 +73,12 @@ export function Footer() {
               <ul className="space-y-2 text-base text-text-secondary">
                 {legalLinks.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="transition-colors hover:text-brand">
+                    <Link
+                      href={link.href}
+                      className="transition-colors hover:text-brand"
+                    >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

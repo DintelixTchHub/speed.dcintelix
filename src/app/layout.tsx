@@ -23,53 +23,48 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "speed test by Dcintelix",
-    template: "%s | DCINTELIX CO LTD",
+    default: "Free Internet Speed Test in Rwanda | DCintelix",
+    template: "%s | DCintelix",
   },
   description:
-    "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
+    "Run a free internet speed test in Rwanda and East Africa. Check download speed, upload speed, ping, and jitter, then explore measured ISP rankings.",
   keywords: [
-    "speed test",
-    "internet speed",
+    "internet speed test Rwanda",
+    "free speed test",
+    "Rwanda internet speed test",
+    "East Africa speed test",
+    "internet speed test online",
+    "internet speed checker",
     "download speed",
     "upload speed",
-    "ping",
-    "network test",
-    "ISP rankings Rwanda",
-    "East Africa internet performance",
-    "public analytics dashboard",
-    "DCINTELIX CO LTD",
-    "bandwidth",
-    "latency",
-    "jitter",
-    "ISP speed test",
-    "broadband test",
-    "connection test",
-    "Rwanda internet",
-    "fast speed test",
-    "accurate speed test",
-    "internet quality test",
+    "ping test",
+    "jitter test",
+    "internet latency test",
+    "Rwanda ISP rankings",
+    "internet providers Rwanda",
+    "DCintelix speed test",
   ],
   authors: [{ name: "DCintelix" }],
   creator: "DCintelix",
   publisher: "DCintelix",
-  metadataBase: new URL("https://dcintelix.rw"),
+  metadataBase: new URL("https://speed.dcintelix.rw"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en_RW",
     url: "https://speed.dcintelix.rw",
-    siteName: "DCINTELIX CO LTD Speed Performance",
-    title: "DCINTELIX CO LTD Internet Speed Performance",
+    siteName: "DCintelix Speed Test",
+    title: "Free Internet Speed Test in Rwanda | DCintelix",
     description:
-      "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
+      "Run a free internet speed test in Rwanda and East Africa. Check download speed, upload speed, ping, and jitter, then explore measured ISP rankings.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DCINTELIX CO LTD Speed Performance",
-    description: "Check internet performance, compare ISP rankings in Rwanda and East Africa, and explore public analytics dashboards. Powered by DCINTELIX CO LTD. innovate. build. grow.",
+    title: "Free Internet Speed Test in Rwanda | DCintelix",
+    description:
+      "Check download speed, upload speed, ping, and jitter with the free DCintelix internet speed test.",
     site: "@dcintelix",
     creator: "@dcintelix",
   },
@@ -110,61 +105,43 @@ export default function RootLayout({
 }>) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "DCintelix Internet Speed Performance ",
-    url: "https://speed.dcintelix.rw",
-    description:
-      "Premium futuristic internet speed performance platform. Ckeck your download, upload speeds and ping with precision.",
-    publisher: {
-      "@type": "Organization",
-      name: "DCintelix",
-      url: "https://www.speed.dcintelix.rw",
-    },
-    potentialAction: {
-      "@type": "HowTo",
-      name: "Check Your Internet Speed",
-      description:
-        "Learn how to test your internet download speed, upload speed, and ping with DCintelix Speed Test.",
-      step: [
-        {
-          "@type": "HowToStep",
-          name: "Open Speed Performance",
-          text: "Visit speed.dcintelix.rw to start testing your internet connection.",
-          url: "https://speed.dcintelix.rw",
-        },
-        {
-          "@type": "HowToStep",
-          name: "Automatic Server Selection",
-          text: "The platform automatically selects the best server near you for accurate results.",
-        },
-        {
-          "@type": "HowToStep",
-          name: "Ping Speed",
-          text: "Measures the latency of your connection in milliseconds.",
-        },
-        {
-          "@type": "HowToStep",
-          name: "Download Speed",
-          text: "Tests your download speed by measuring how fast data is received from the server.",
-        },
-        {
-          "@type": "HowToStep",
-          name: "Upload Speed",
-          text: "Tests your upload speed by measuring how fast data is sent to the server.",
-        },
-        {
-          "@type": "HowToStep",
-          name: "View Results",
-          text: "Get detailed results including download speed, upload speed, ping, jitter, and ISP information.",
-        },
-      ],
-    },
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://speed.dcintelix.rw/#organization",
+        name: "DCintelix",
+        url: "https://speed.dcintelix.rw",
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://speed.dcintelix.rw/#website",
+        name: "DCintelix Speed Test",
+        url: "https://speed.dcintelix.rw",
+        description:
+          "Free internet speed testing and measured ISP rankings for Rwanda and East Africa.",
+        publisher: { "@id": "https://speed.dcintelix.rw/#organization" },
+        inLanguage: "en",
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://speed.dcintelix.rw/#speed-test",
+        name: "DCintelix Internet Speed Test",
+        url: "https://speed.dcintelix.rw/speed-test",
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Any",
+        description:
+          "Test internet download speed, upload speed, latency, and jitter, and explore ISP performance rankings.",
+        publisher: { "@id": "https://speed.dcintelix.rw/#organization" },
+        inLanguage: "en",
+      },
+    ],
   };
 
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <link rel="icon" type="image/png" href="/dc-speed-icon-logo.png" />
@@ -174,7 +151,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
         />
         <Script
           async

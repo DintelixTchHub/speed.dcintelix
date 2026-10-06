@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 interface MinimalGaugeProps {
   value: number;
   maxValue?: number;
@@ -48,9 +46,7 @@ export function MinimalGauge({
   const circumference = 2 * Math.PI * progressRadius;
   const progressRatio = Math.min(value / maxValue, 1);
   const strokeDashoffset = circumference - progressRatio * circumference;
-
   const ticks = buildTickMarks(cx, cy, outerRadius, 60);
-  const showGo = status === "complete" && !isRunning;
 
   const phaseLabel =
     status === "ping"
@@ -65,16 +61,17 @@ export function MinimalGauge({
 
   return (
     <div
-      className={cn("relative flex flex-col items-center", onClick && "cursor-pointer")}
+      className={`relative flex flex-col items-center${onClick ? " cursor-pointer rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" : ""}`}
       onClick={onClick}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (onClick && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
+      onKeyDown={(event) => {
+        if (onClick && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
           onClick();
         }
       }}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? "Run speed test again" : undefined}
     >
       <svg
         viewBox={`0 0 ${size} ${size}`}
@@ -118,7 +115,7 @@ export function MinimalGauge({
           cy={cy}
           r={progressRadius}
           fill="none"
-          stroke={showGo ? "#00FF88" : "#00D9FF"}
+          stroke={status === "complete" ? "#00FF88" : "#00D9FF"}
           strokeWidth={progressStrokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -126,7 +123,7 @@ export function MinimalGauge({
           transform={`rotate(-90 ${cx} ${cy})`}
           className="transition-all duration-500 ease-out"
           style={{
-            filter: `drop-shadow(0 0 8px ${showGo ? "rgba(0,255,136,0.5)" : "rgba(0,217,255,0.4)"})`,
+            filter: `drop-shadow(0 0 8px ${status === "complete" ? "rgba(0,255,136,0.5)" : "rgba(0,217,255,0.4)"})`,
           }}
         />
 
@@ -139,18 +136,14 @@ export function MinimalGauge({
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        {showGo ? (
-          <button
-            type="button"
-            onClick={onClick}
-            className="pointer-events-auto font-bold uppercase tracking-[0.3em] text-3xl sm:text-4xl text-brand transition-colors hover:text-white"
-          >
-            GO
-          </button>
+        {status === "complete" && onClick ? (
+          <span className="font-bold uppercase tracking-[0.3em] text-1xl sm:text-2xl text-brand transition-colors">
+            Run
+          </span>
         ) : (
           <>
             <span className="text-3xl sm:text-4xl md:text-5xl font-bold font-mono text-text-primary">
-              {isRunning ? value.toFixed(0) : "0"}
+              {value.toFixed(0)}
             </span>
             <span className="text-xs sm:text-sm text-text-secondary uppercase tracking-widest mt-1">
               {unit}
